@@ -1,13 +1,14 @@
 import { Client, GatewayIntentBits } from "discord.js";
 import { WebSocket } from "ws";
 import dotenv from "dotenv";
+import { Discord } from "./src/discord.js";
 
 dotenv.config();
 
 // set up websocket client (for sending and receiving messages to/from the server)
 const socket = new WebSocket(process.env.SERVER_URL);
 
-function sendToServer(message) {
+export function sendToServer(message) {
   if (socket.readyState !== socket.OPEN) return;
   socket.send(JSON.stringify(message));
 }
@@ -23,20 +24,27 @@ const bot = new Client({
 
 // set up message listeners
 socket.on("open", () => {
-  console.log("websocket connected");
+  console.log("bot connected to server");
 
   // send a message letting server know that i'm the discord bot
-  sendToServer({ type: "I_AM_DISCORD" });
+  // sendToServer({ type: "I_AM_DISCORD" });
 });
 
 // set up discord bot
 bot.once("ready", () => {
   console.log(`discord bot logged in as ${bot.user.tag}`);
+  Discord.id = bot.user.id;
 });
 
 bot.on("messageCreate", (message) => {
   if (message.author.bot) return; // don't handle messages from bots
-  if (!message.content.startsWith(`<@!${bot.user.id}>`)) return; // don't handle messages not talking to me
+  if (
+    !(
+      message.content.startsWith(`<@${bot.user.id}>`) ||
+      message.content.startsWith(`<@!${bot.user.id}>`)
+    )
+  )
+    return; // don't handle messages not talking to me
 
   Discord.handleDiscordMessage(message);
 });

@@ -13,6 +13,48 @@ export const discordIdToUserId = {}; // persisted after disconnect
  */
 export const pairedUserIds = {};
 
+export function addClient(ws) {
+  // assign this client an id
+  const id = uuid();
+  // create handler for this client
+  clients[id] = new ClientHandler(ws, id);
+
+  // handle errors...
+  ws.on("error", (error) => {
+    console.error(`client ${id} error: ${error}`);
+  });
+
+  // when i receive a message
+  ws.on("message", (rawMessage) => {
+    try {
+      // parse message into object
+      const message = JSON.parse(rawMessage.toString());
+      console.log(
+        `server received message from client ${id}: ${JSON.stringify(message)}`
+      );
+
+      clients[id].handleMessage(message);
+    } catch (e) {
+      console.error(`client ${id} handler encountered an error: ${e}`);
+      console.error(e.stack);
+    }
+  });
+
+  // when socket closes, do any clean up necessary
+  ws.on("close", () => {
+    console.log(`client ${id} disconnected`);
+
+    // disconnect from connected client
+    clients[id].unpair();
+
+    // remove client
+    delete userIdToClientId[clients[id].userId];
+    delete clients[id];
+  });
+
+  console.log(`client ${id} connected`);
+}
+
 /** handle a connection */
 export class ClientHandler {
   constructor(ws, id) {
@@ -25,15 +67,20 @@ export class ClientHandler {
   }
 
   handleMessage(message) {
-    if (message.type === MessageTypes.SIGNUP) this.signup();
-    if (message.type === MessageTypes.LOGIN) this.login(message.payload);
-
+    if (message.type === MessageTypes.SIGNUP) {
+      this.signup();
+      return;
+    } else if (message.type === MessageTypes.LOGIN) {
+      this.login(message.payload);
+      return;
+    }
     // if the message is any other type, the user must be logged in and paired
-    if (!this.userId || !this.discordId || !this.pairId) {
+    else if (!this.userId || !this.discordId || !this.pairId) {
       this.sendMessage({
         type: MessageTypes.ERROR,
         payload: "you must be logged in and paired to do that",
       });
+      return;
     }
 
     switch (message.type) {
