@@ -2,6 +2,7 @@ import { WebSocketServer } from "ws";
 import dotenv from "dotenv";
 import { clients, userIdToClientId, ClientHandler } from "./src/connection.js";
 import { uuid } from "./src/utils.js";
+import { MessageTypes } from "./src/messageTypes.js";
 
 dotenv.config();
 
@@ -29,6 +30,25 @@ server.on("connection", (ws) => {
         `server received message from client ${id}: ${JSON.stringify(message)}`
       );
 
+      // if i receive an I_AM_DISCORD, change the client into discord handler...
+      if (message.type == MessageTypes.I_AM_DISCORD) {
+        delete clients[id].userId; // delete it from client
+        discord = new DiscordHandler(ws); // add discord
+
+        // remove default handlers
+        ws.removeAllListeners("error");
+        ws.removeAllListeners("close");
+
+        // add discord handlers
+        ws.on("error", (error) => console.error(`discord error: ${error}`));
+        ws.on("close", () => {
+          console.log("discord disconnected");
+          discord = null;
+        });
+
+        return;
+      }
+
       clients[id].handleMessage(message);
     } catch (e) {
       console.error(`client ${id} handler encountered an error: ${e}`);
@@ -44,8 +64,8 @@ server.on("connection", (ws) => {
     clients[id].unpair();
 
     // remove client
-    delete clients[id];
     delete userIdToClientId[clients[id].userId];
+    delete clients[id];
   });
 });
 
