@@ -29,7 +29,7 @@ in to receive a user ID.
 
 These are messages that the server receives from the client:
 
-| Message Type | Payload                           | Description                                                                    |
+| Message type | Payload                           | Description                                                                    |
 | ------------ | --------------------------------- | ------------------------------------------------------------------------------ |
 | SIGNUP       | none                              | the server assigns the client an ID and responds with a SIGNUP_SUCCESS message |
 | LOGIN        | the ID returned by signup.        | send after connecting if a client has already been assigned an ID              |
@@ -38,6 +38,22 @@ These are messages that the server receives from the client:
 
 These are messages the server sends the client:
 
-| Message Type   | Payload         | Description                          |
+| Message type   | Payload         | Description                          |
 | -------------- | --------------- | ------------------------------------ |
 | SIGNUP_SUCCESS | the assigned ID | sent in response to a SIGNUP message |
+
+These are messages the server receives from the discord bot:
+
+| Message type  | Payload                      | Description                                         |
+| ------------- | ---------------------------- | --------------------------------------------------- |
+| I_AM_DISCORD  | none                         | so the server knows which client is the discord bot |
+| DISCORD_LOGIN | { userId, discordId }        | connects the user id to the discord id              |
+| PAIR          | { requesterId, requestedId } | pairs the two discord ids together                  |
+| UNPAIR        | requesterId                  | unpairs the requester discord id                    |
+
+These are messages the server sends the discord bot:
+
+| Message type | Payload | Description            |
+| ------------ | ------- | ---------------------- |
+| SUCCESS      | message | on any request success |
+| ERROR        | message | on any request error   |

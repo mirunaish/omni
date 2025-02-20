@@ -4,6 +4,7 @@ import { uuid } from "./utils.js";
 /** dictionary of all clients */
 export const clients = {};
 export const userIdToClientId = {}; // map user id to client id
+export const discordIdToUserId = {}; // persisted after disconnect
 
 /**
  * map client user id to paired client user id.
@@ -11,6 +12,48 @@ export const userIdToClientId = {}; // map user id to client id
  * are automatically paired with the same user (if they are also connected)
  */
 export const pairedUserIds = {};
+
+export function addClient(ws) {
+  // assign this client an id
+  const id = uuid();
+  // create handler for this client
+  clients[id] = new ClientHandler(ws, id);
+
+  // handle errors...
+  ws.on("error", (error) => {
+    console.error(`client ${id} error: ${error}`);
+  });
+
+  // when i receive a message
+  ws.on("message", (rawMessage) => {
+    try {
+      // parse message into object
+      const message = JSON.parse(rawMessage.toString());
+      console.log(
+        `server received message from client ${id}: ${JSON.stringify(message)}`
+      );
+
+      clients[id].handleMessage(message);
+    } catch (e) {
+      console.error(`client ${id} handler encountered an error: ${e}`);
+      console.error(e.stack);
+    }
+  });
+
+  // when socket closes, do any clean up necessary
+  ws.on("close", () => {
+    console.log(`client ${id} disconnected`);
+
+    // disconnect from connected client
+    clients[id].unpair();
+
+    // remove client
+    delete userIdToClientId[clients[id].userId];
+    delete clients[id];
+  });
+
+  console.log(`client ${id} connected`);
+}
 
 /** handle a connection */
 export class ClientHandler {
@@ -20,22 +63,27 @@ export class ClientHandler {
 
     this.userId = null;
     this.pairId = null; // the client id of the paired client
+    this.discordId = null; // this user's discord id
   }
 
   handleMessage(message) {
+    if (message.type === MessageTypes.SIGNUP) {
+      this.signup();
+      return;
+    } else if (message.type === MessageTypes.LOGIN) {
+      this.login(message.payload);
+      return;
+    }
+    // if the message is any other type, the user must be logged in and paired
+    else if (!this.userId || !this.discordId || !this.pairId) {
+      this.sendMessage({
+        type: MessageTypes.ERROR,
+        payload: "you must be logged in and paired to do that",
+      });
+      return;
+    }
+
     switch (message.type) {
-      case MessageTypes.SIGNUP:
-        this.signup();
-        break;
-      case MessageTypes.LOGIN:
-        this.login(message.payload);
-        break;
-      case MessageTypes.PAIR:
-        this.pair(message.payload);
-        break;
-      case MessageTypes.UNPAIR:
-        this.unpair();
-        break;
       default:
         console.error(`unknown message type ${message.type}`);
     }
@@ -79,7 +127,10 @@ export class ClientHandler {
 
   /** given another client's userId, pair with them */
   pair(userId) {
-    // find the user
+    // unpair from my current pair
+    unpair();
+
+    // find the requested user
     const otherUser = clients[userIdToClientId[userId]];
 
     // set the pair id
