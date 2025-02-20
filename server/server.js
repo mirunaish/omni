@@ -1,27 +1,17 @@
 import { WebSocketServer } from "ws";
+import dotenv from "dotenv";
+import { addClient } from "./src/connection.js";
+import { addDiscord, discord } from "./src/discordConnection.js";
+dotenv.config();
 
-const server = new WebSocketServer({ port: 8080 });
+const server = new WebSocketServer({ port: process.env.PORT });
 
+// server assumes that first client to connect is discord
 server.on("connection", (ws) => {
-  console.log("client connected");
-
-  // handle errors...
-  ws.on("error", (error) => {
-    console.error("websocket error:", error);
-  });
-
-  // when i receive a message
-  ws.on("message", (message) => {
-    console.log("received message ", message.toString());
-
-    // echo message back to sender
-    ws.send(message);
-  });
-
-  // when socket closes, do any clean up necessary
-  ws.on("close", () => {
-    console.log("client disconnected");
-  });
+  // if discord hasn't been connected, connect discord
+  if (discord.handler === null) addDiscord(ws);
+  // otherwise connect a new client
+  else addClient(ws);
 });
 
-console.log("socket server running on port 8080");
+console.log("socket server running on port " + process.env.PORT);

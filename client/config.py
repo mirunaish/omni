@@ -1,0 +1,1 @@
+SERVER_URL = "wss://omni-server-2ard.onrender.com"
