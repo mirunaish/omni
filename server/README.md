@@ -29,18 +29,17 @@ in to receive a user ID.
 
 These are messages that the server receives from the client:
 
-| Message type | Payload                           | Description                                                                    |
-| ------------ | --------------------------------- | ------------------------------------------------------------------------------ |
-| SIGNUP       | none                              | the server assigns the client an ID and responds with a SIGNUP_SUCCESS message |
-| LOGIN        | the ID returned by signup.        | send after connecting if a client has already been assigned an ID              |
-| PAIR         | the ID of the client to pair with | the two clients are paired so their robots can communicate                     |
-| UNPAIR       | none                              | the clients are unpaired                                                       |
+| Message type | Payload                    | Description                                                                    |
+| ------------ | -------------------------- | ------------------------------------------------------------------------------ |
+| SIGNUP       | none                       | the server assigns the client an ID and responds with a SIGNUP_SUCCESS message |
+| LOGIN        | the ID returned by signup. | send after connecting if a client has already been assigned an ID              |
 
 These are messages the server sends the client:
 
 | Message type   | Payload         | Description                          |
 | -------------- | --------------- | ------------------------------------ |
 | SIGNUP_SUCCESS | the assigned ID | sent in response to a SIGNUP message |
+| ERROR          | message         | on any request error                 |
 
 These are messages the server receives from the discord bot:
 

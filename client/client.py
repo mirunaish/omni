@@ -12,10 +12,14 @@ async def process_queue(queue):
     while True:
         # i put messages in the queue as a tuple (source, message)
         source, message = await queue.get()
+
         if source == "serial":
-            print("processing message from serial: ", message)
+            await serial.process_message(message)
+
         elif source == "websocket":
-            print("processing message from websocket: ", message)
+            await socket.process_message(message)
+
+        queue.task_done()
 
 
 async def main():
