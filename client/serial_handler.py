@@ -32,3 +32,7 @@ class SerialHandler(asyncio.Protocol):
 
     def connection_lost(self, exc):
         print("disconnected from serial: ", exc)
+
+    async def process_message(self, message):
+        # handle messages from serial
+        print("todo")

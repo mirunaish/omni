@@ -1,7 +1,9 @@
 import asyncio
 import websockets
+import json
 
 from config import SERVER_URL
+from user_id_cache import load_id, save_id
 
 class WebsocketHandler():
     def __init__(self):
@@ -17,6 +19,14 @@ class WebsocketHandler():
             print("websocket connected")
         except Exception as e:
             print("couldn't connect to server:", e)
+
+        # load user id
+        user_id = load_id()
+        # send signup or login message... depending on whether i have a userId
+        if user_id is None:
+            await self.send_message("SIGNUP", None)
+        else:
+            await self.send_message("LOGIN", user_id)
         
         # start receiving messages
         await self.handle_messages()
@@ -32,9 +42,22 @@ class WebsocketHandler():
             print("disconnected from server:", e)
 
     # send a message to the server
-    async def send_message(self, message):
+    async def send_message(self, type, payload):
+        message = json.dumps({"type": type, "payload": payload})
         print("sending message ", message)
         try:
             await self.socket.send(message)
         except Exception as e:
             print("couldn't send message:", e)
+    
+    async def process_message(self, message):
+        message = json.loads(message)
+        type, payload = message["type"], message["payload"]
+
+        if type == "SIGNUP_SUCCESS":
+            save_id(payload)
+        elif type == "ERROR":
+            print("got error from server:", payload)        
+        
+        else:
+            print("unknown message type:", type)
