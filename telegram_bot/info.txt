@@ -1,0 +1,18 @@
+Telegram bot 
+
+token: 8082249856:AAEOnBF0kjELTRSdMzaeIIoFaemtNxnww7s
+name: omni_cs129
+username: omni_cs129_bot
+
+chatgpt created the script telegram_bot.py
+to run: python telegram.py 
+
+dependencies: 
+python=3.10.x
+python-telegram-bot
+pip install python-telegram-bot --upgrade
+
+ffmpeg 
+brew install ffmpeg
+sudo apt update && sudo apt install ffmpeg
+
