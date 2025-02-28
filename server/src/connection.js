@@ -105,12 +105,14 @@ export class ClientHandler {
 
   login(userId) {
     // get user from database
-    const { discordId, pairId } = fetchUser(userId);
+    const user = fetchUser(userId);
     if (!user) {
       // report error to user
       this.reportError("user not found");
       return;
     }
+
+    const { discordId, pairId } = user;
 
     this.userId = userId;
     userIdToClientId[userId] = this.id;
