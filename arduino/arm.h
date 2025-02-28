@@ -15,6 +15,9 @@ class Arm {
     int movingTo = -1;  // where pair told me to move...
     int attempts = 0;
 
+    int minAngleValue;  // pot calibration
+    int maxAngleValue;
+
   public:
     Arm() {}
 
@@ -29,14 +32,27 @@ class Arm {
       this->servo.write(Consts::neutralAngle);
     }
 
+    /** when first starting, find mapping of servo to pot, to accurately map back later */
+    void calibrate() {
+      // find min value
+      servo.write(0);
+      delay(1000);  // wait for servo to move...
+      this->minAngleValue = analogRead(potPin);
+
+      // find max value
+      servo.write(180);
+      delay(1000);  // wait for servo to move....
+      this->maxAngleValue = analogRead(potPin);
+
+      Serial.println("LOG arm " + this->name + " calibrated. set min " + String(minAngleValue) + " and max " + String(maxAngleValue));
+    }
+
     /** get the angle of the arms as reported by the pot */
     int getPotAngle() {
-      // assume entire 0-1023 range maps to the servo's 0-180 degrees.
-      // they are inverted so max pot is min servo....
-      // this likely won't be true, values here will have to be adjusted
-      // TODO: calibrate
-      int rawValue = analogRead(potPin);
-      return floor(180.0 - (180.0 * rawValue) / 1023.0);
+      // minAngleValue - maxAngleValue pot range maps to the servo's 0-180 degrees.
+      // except they are inverted so max pot is min servo....
+      double rawValue = analogRead(potPin);  // double to avoid numerical precision issues
+      return floor(180.0 - (180.0 * (rawValue - minAngleValue)) / (maxAngleValue - minAngleValue));
     }
 
     /** received signal from server that i should move here */

@@ -26,6 +26,10 @@ void setup() {
 
   // start serial for communicating with the client
   Serial.begin(115200);
+
+  // calibrate arms
+  leftArm.calibrate();
+  rightArm.calibrate();
 }
 
 void loop() {
