@@ -16,4 +16,7 @@ export const MessageTypes = {
   // server to discord bot
   SUCCESS: "SUCCESS",
   ERROR: "ERROR", // yea this appears in server to client too
+
+  // forward
+  HEADPAT: "HEADPAT",
 };

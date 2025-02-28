@@ -19,6 +19,7 @@ class WebsocketHandler():
             print("websocket connected")
         except Exception as e:
             print("couldn't connect to server:", e)
+            return
 
         # load user id
         user_id = load_id()
@@ -50,14 +51,17 @@ class WebsocketHandler():
         except Exception as e:
             print("couldn't send message:", e)
     
-    async def process_message(self, message):
+    async def process_message(self, message, serial):
         message = json.loads(message)
         type, payload = message["type"], message["payload"]
 
         if type == "SIGNUP_SUCCESS":
             save_id(payload)
         elif type == "ERROR":
-            print("got error from server:", payload)        
+            print("got error from server:", payload)
         
+        elif type == "HEADPAT":
+            await serial.send_message("HEADPAT")
+
         else:
             print("unknown message type:", type)

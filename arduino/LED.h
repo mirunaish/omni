@@ -1,8 +1,6 @@
 #pragma once
 
-#include <Arduino.h>
-
-int fadeAmount = 5;
+#include "consts.h"
 
 class LED {
   private:
@@ -10,9 +8,19 @@ class LED {
     int brightness = 0;
 
   public:
+    LED() {}
+
     LED(int pin) {
-      this.pin = pin;
+      this->pin = pin;
 
       pinMode(pin, OUTPUT);
     }
-}
+
+    void loop() {
+      ;
+    }
+
+    void blush() {
+      ; 
+    }
+};

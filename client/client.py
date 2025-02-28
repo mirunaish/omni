@@ -14,10 +14,10 @@ async def process_queue(queue):
         source, message = await queue.get()
 
         if source == "serial":
-            await serial.process_message(message)
+            await serial.process_message(message, socket)
 
         elif source == "websocket":
-            await socket.process_message(message)
+            await socket.process_message(message, serial)
 
         queue.task_done()
 

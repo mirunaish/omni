@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Arduino.h>
 #include <SPI.h>
 #include <TFT_eSPI.h>
 
@@ -18,4 +17,4 @@ class Screen {
       tft.setRotation(2);  // TODO change back to 0?
       tft.fillScreen(TFT_BLACK);  // initialize to black
     }
-}
+};
