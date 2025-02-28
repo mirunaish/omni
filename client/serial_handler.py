@@ -54,7 +54,18 @@ class SerialHandler(asyncio.Protocol):
     async def process_message(self, message, socket):
         # handle messages from serial
         type, payload = split_message(message)
+
         if type == "HEADPAT":
             # forward to websocket
             await socket.send_message(type, payload)
+        elif type == "WAVE":
+            # forward to websocket
+            await socket.send_message(type, payload)
+        
+        elif type == "LOG":
+            print("arduino logged:", payload)
+        elif type == "ERROR":
+            print("arduino reported error:", payload)
+        else:
+            print("unknown message from serial:", type)
         

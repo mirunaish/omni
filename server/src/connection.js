@@ -80,6 +80,9 @@ export class ClientHandler {
       case MessageTypes.HEADPAT:
         sendToPairedUser(message);
         break;
+      case MessageTypes.WAVE:
+        sendToPairedUser(message);
+        break;
       default:
         console.error(`unknown message type ${message.type}`);
     }

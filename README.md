@@ -89,16 +89,19 @@ Serial messages are space-separated strings:
 
 These are messages that the Arduino sends:
 
-| Message type | Payload | Description       |
-| ------------ | ------- | ----------------- |
-| HEADPAT      | none    | forwarded to pair |
-| ERROR        | message | on any error      |
+| Message type | Payload    | Description                              |
+| ------------ | ---------- | ---------------------------------------- |
+| HEADPAT      | none       | forwarded to pair                        |
+| WAVE         | name value | name is LEFT or RIGHT. forwarded to pair |
+| LOG          | message    | printed in client console for debugging  |
+| ERROR        | message    | on any error                             |
 
 These are messages that the Arduino receives:
 
 | Message type | Payload | Description |
 | ------------ | ------- | ----------- |
 | HEADPAT      | none    |             |
+| WAVE         | value   |             |
 
 ## Contributors
 

@@ -19,4 +19,5 @@ export const MessageTypes = {
 
   // forward
   HEADPAT: "HEADPAT",
+  WAVE: "WAVE",
 };

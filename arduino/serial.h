@@ -20,6 +20,25 @@ String readSentenceFromSerial() {
   return sentence;
 }
 
+void splitIntoWords(String sentence, String words[Consts::maxWords]) {
+  int wordCount = 0;
+
+  // find start and end of current word
+  int start = 0;
+  int end = sentence.indexOf(' ');
+
+  // while i haven't run out of spaces
+  while (end != -1) {
+    words[wordCount++] = sentence.substring(start, end);
+    // get next word
+    start = end + 1;
+    end = sentence.indexOf(' ', start);
+  }
+  
+  // add the word after the last space
+  words[wordCount++] = sentence.substring(start);
+}
+
 Message readMessageFromSerial() {
   // read entire sentence
   String sentence = readSentenceFromSerial();
