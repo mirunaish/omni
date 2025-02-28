@@ -1,17 +1,11 @@
 import { MessageTypes } from "./messageTypes.js";
 import { uuid } from "./utils.js";
+import { storeUser, updatePair, fetchUser } from "./redis.js";
 
 /** dictionary of all clients */
 export const clients = {};
 export const userIdToClientId = {}; // map user id to client id
-export const discordIdToUserId = {}; // persisted after disconnect
-
-/**
- * map client user id to paired client user id.
- * this is persisted after a user disconnects, so when they log back in they
- * are automatically paired with the same user (if they are also connected)
- */
-export const pairedUserIds = {};
+export const discordIdToUserId = {}; // only for logged in users
 
 export function addClient(ws) {
   // assign this client an id
@@ -45,10 +39,12 @@ export function addClient(ws) {
     console.log(`client ${id} disconnected`);
 
     // disconnect from connected client
-    clients[id].unpair();
+    const otherUser = clients[id].pairedUser();
+    if (otherUser) otherUser.pairId = null;
 
     // remove client
     delete userIdToClientId[clients[id].userId];
+    delete discordIdToUserId[clients[id].discordId];
     delete clients[id];
   });
 
@@ -76,10 +72,7 @@ export class ClientHandler {
     }
     // if the message is any other type, the user must be logged in and paired
     else if (!this.userId || !this.discordId || !this.pairId) {
-      this.sendMessage({
-        type: MessageTypes.ERROR,
-        payload: "you must be logged in and paired to do that",
-      });
+      this.reportError("you must be logged in and paired to do that");
       return;
     }
 
@@ -95,15 +88,6 @@ export class ClientHandler {
     return clients[this.pairId];
   }
 
-  /** if this user was previously paired with another user, pair them again */
-  attemptToAutoPair() {
-    const pairedClient = clients[userIdToClientId[pairedUserIds[this.userId]]];
-    if (!pairedClient) return;
-
-    this.pairId = pairedClient.id;
-    pairedClient.pairId = this.id;
-  }
-
   /** assign this client a new user id */
   signup() {
     this.userId = uuid();
@@ -115,40 +99,72 @@ export class ClientHandler {
       payload: this.userId,
     });
 
-    this.attemptToAutoPair();
+    // store the new user in the database (null discordId and paidId)
+    storeUser(this.userId, null, null);
   }
 
   login(userId) {
-    // set my user id
-    this.userId = userId;
+    // get user from database
+    const { discordId, pairId } = fetchUser(userId);
+    if (!user) {
+      // report error to user
+      this.reportError("user not found");
+      return;
+    }
 
-    this.attemptToAutoPair();
+    this.userId = userId;
+    userIdToClientId[userId] = this.id;
+
+    if (discordId) {
+      this.discordId = discordId;
+      discordIdToUserId[discordId] = userId;
+    }
+
+    // attempt to connect to pair, if my pair is online
+    if (pairId) {
+      const pair = clients[userIdToClientId[pairId]];
+      if (!pair) return;
+
+      this.pairId = pair.id;
+      pair.pairId = this.id;
+    }
   }
 
   /** given another client's userId, pair with them */
-  pair(userId) {
+  pair(userId, requestId) {
     // unpair from my current pair
     unpair();
 
     // find the requested user
     const otherUser = clients[userIdToClientId[userId]];
 
+    // if the other user is already paired, report error
+    if (otherUser.pairId) {
+      discord.reportError("the other user is already paired", requestId);
+      return;
+    }
+
     // set the pair id
     this.pairId = otherUser.id;
     // tell other user i paired with them
-    other.pairId = this.id;
+    otherUser.pairId = this.id;
+
+    // save this pairing to the db, in both directions
+    updatePair(this.userId, otherUser.userId);
+    updatePair(otherUser.userId, this.userId);
+
+    discord.sendMessage({ type: MessageTypes.SUCCESS, requestId });
   }
 
   unpair() {
+    // clear the persisted pairing in the database
+    deletePairing(this.userId);
+
+    this.pairId = null;
+
     const otherUser = this.pairedUser();
     if (!otherUser) return;
 
-    // clear the persisted pairing
-    delete pairedUserIds[this.userId];
-    delete pairedUserIds[otherUser.userId];
-
-    // clear both pair ids
-    this.pairId = null;
     otherUser.pairId = null;
   }
 
@@ -159,5 +175,12 @@ export class ClientHandler {
     if (this.ws.readyState === this.ws.OPEN) {
       this.ws.send(messageString);
     }
+  }
+
+  reportError(errorMessage) {
+    this.sendMessage({
+      type: MessageTypes.ERROR,
+      payload: errorMessage,
+    });
   }
 }

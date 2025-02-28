@@ -1,5 +1,6 @@
 import { clients, userIdToClientId, discordIdToUserId } from "./connection.js";
 import { MessageTypes } from "./messageTypes.js";
+import { updateDiscordId } from "./redis.js";
 
 export const discord = { handler: null };
 
@@ -66,6 +67,7 @@ export class DiscordHandler {
     client.discordId = discordId;
     // set the persisted ids
     discordIdToUserId[discordId] = userId;
+    updateDiscordId(userId, discordId);
 
     // send success message
     this.sendMessage({ type: MessageTypes.SUCCESS, requestId });
@@ -80,10 +82,7 @@ export class DiscordHandler {
       return;
     }
 
-    requester.pair(requester.id);
-
-    // send success message
-    this.sendMessage({ type: MessageTypes.SUCCESS, requestId });
+    requester.pair(requester.id, requestId);
   }
 
   unpair(requesterId, requestId) {
