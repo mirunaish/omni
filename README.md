@@ -2,6 +2,13 @@
 
 Be in two places at once
 
+## Local setup instructions
+
+1. Start server
+2. Start Discord bot
+3. Start Arduino
+4. Start client
+
 ## Server
 
 Communicates with the client via sockets and with the discord bot via HTTP
