@@ -2,22 +2,22 @@
 
 /* --------- consts --------- */
 
-class Consts {
-  public:
-    static const int frameDelay = 30;  // in ms
-    static const int maxWords = 5;  // maximum number of words i expect in a message from serial
+const int FRAME_DELAY = 10;  // in ms
+const int MAX_WORDS = 5;  // maximum number of words i expect in a message from serial
 
-    // head force sensor
-    static const int patCooldown = 5;  // in seconds
-    static const int patThreshold = 300;  // minimum force sensor value that is registered as a headpat
+// head force sensor
+const int PAT_COOLDOWN = 5;  // in seconds
+const int PAT_THRESHOLD = 300;  // minimum force sensor value that is registered as a headpat
 
-    // cheek LED
-    static const int blushSpeed = 5;
-    static const int blushDuration = 5;  // in seconds
+// cheek LED
+const int BLUSH_SPEED = 5;
+const int BLUSH_DURATION = 5;  // in seconds
 
-    // arm
-    static const int neutralAngle = 90;    
-    static const int waveThreshold = 5;  // in degrees. minimum change in angle registered as a wave
-    static const int waveAttempts = 5;  // how many times to attempt to move arm before assuming i'm blocked by user
-    static const int waveAccuracy = 3;  // how close to the reported value to try to move the servo
-};
+// arm
+const int NEUTRAL_ANGLE = 90;
+const int WAVE_THRESHOLD = 5;  // in degrees. minimum change in angle registered as a wave
+const int WAVE_ATTEMPTS = 5;  // how many times to attempt to move arm before assuming i'm blocked by user
+const int WAVE_ACCURACY = 3;  // how close to the reported value to try to move the servo
+
+// screen
+const int MAX_PIXELS = 35;

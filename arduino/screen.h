@@ -7,14 +7,27 @@
 #define TFT_DC 9  // Data/Command pin
 #define TFT_RST 8  // Reset pin
 
-class Screen {
-  private:
-    TFT_eSPI tft = TFT_eSPI();
+TFT_eSPI tft = TFT_eSPI();
+int cursorY = 50;
 
-  public:
-    Screen() {
-      tft.init();
-      tft.setRotation(2);  // TODO change back to 0?
-      tft.fillScreen(TFT_BLACK);  // initialize to black
-    }
-};
+screenSetup() {
+  tft.init();
+  tft.setRotation(2);  // TODO change back to 0?
+  tft.fillScreen(TFT_BLACK);  // initialize to black
+}
+
+void screenPrint(String text) {
+  tft.setTextColor(TFT_WHITE);
+  tft.setTextSize(1);
+  tft.setCursor(20, cursorY);
+  tft.println(text);
+  cursorY+=10;
+}
+
+void screenSetPixel(int x, int y, int color) {
+  tft.drawPixel(x, y, color);
+}
+
+void screenLoop() {
+  // in case anything needs to be updated every frame
+}

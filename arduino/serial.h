@@ -5,22 +5,7 @@ struct Message {
   String payload;
 };
 
-String readSentenceFromSerial() {
-  String sentence;
-  char byte;
-
-  while (Serial.available()) {
-    char byte = Serial.read();
-    if (byte != '\n') {
-      break;
-    }
-    sentence += byte;
-  }
-
-  return sentence;
-}
-
-void splitIntoWords(String sentence, String words[Consts::maxWords]) {
+void splitIntoWords(String sentence, String words[MAX_WORDS]) {
   int wordCount = 0;
 
   // find start and end of current word
@@ -39,9 +24,30 @@ void splitIntoWords(String sentence, String words[Consts::maxWords]) {
   words[wordCount++] = sentence.substring(start);
 }
 
+void parseNumbers(String sentence, int numbers[MAX_PIXELS * 3], int* numberCount) {
+  *numberCount = 0;
+
+  // find start and end of current word
+  int start = 0;
+  int end = sentence.indexOf(' ');
+
+  // while i haven't run out of spaces
+  while (end != -1) {
+    numbers[*numberCount] = sentence.substring(start, end).toInt();
+    (*numberCount)++;
+    // get next number
+    start = end + 1;
+    end = sentence.indexOf(' ', start);
+  }
+  
+  // add the number after the last space
+  numbers[*numberCount] = sentence.substring(start).toInt();
+  (*numberCount)++;
+}
+
 Message readMessageFromSerial() {
   // read entire sentence
-  String sentence = readSentenceFromSerial();
+  String sentence = Serial.readStringUntil('\n');
   Message message;
   
   int spaceIndex = sentence.indexOf(' ');  // find the first space

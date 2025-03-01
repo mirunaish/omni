@@ -26,14 +26,14 @@ class LED {
       if (blushTimer > 0) {
         blushTimer--;
         // fade in blush
-        if (brightness < 255) setBrightness(brightness + Consts::blushSpeed);
+        if (brightness < 255) setBrightness(brightness + BLUSH_SPEED);
       } else if (blushTimer == 0 && brightness > 0) {
         // fade out blush
-        setBrightness(brightness - Consts::blushSpeed);
+        setBrightness(brightness - BLUSH_SPEED);
       }
     }
 
     void blush() {
-      blushTimer = getFrames(Consts::blushDuration);
+      blushTimer = getFrames(BLUSH_DURATION);
     }
 };
