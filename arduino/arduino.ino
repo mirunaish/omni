@@ -37,12 +37,17 @@ void setup() {
   frames = 0;
 }
 
+int numbers[3 + MAX_PIXELS];
+
 void loop() {
   if (frames == 10) Serial.println("SEND_ME_THE_IMAGE");
   frames++;
 
   // listen for messages from serial
   if (Serial.available()) {
+    // type = Serial.readStringUntil(' ');  // read message type
+    // depending on type, each component will read the rest of the data
+    
     Message message = readMessageFromSerial();
 
     // if (message.type == "HEADPAT") {
@@ -58,17 +63,24 @@ void loop() {
     //   else if (name == "RIGHT") rightArm.moveTo(value);
     //   else Serial.println("ERROR unknown arm " + name);
     // }
-    // else if (message.type == "PIXEL") {
-      int numbers[MAX_PIXELS * 3];
+    // if (message.type == "PIXEL_SCALED") {
+    //   int numberCount = 0;
+    //   parseNumbers(message.payload, numbers, &numberCount);
+    //   Serial.println("LOG received " + String(numberCount) + " numbers");  // tell client i got the message
+    //   for (int i=0; i<numberCount/3; i++) {
+    //     screenSetPixel(numbers[i*3], numbers[i*3+1], numbers[i*3+2]);
+    //   }
+    //   return;  // skip delay
+    // }
+    // else
+    if (message.type == "PIXEL") {
       int numberCount = 0;
       parseNumbers(message.payload, numbers, &numberCount);
       Serial.println("LOG received " + String(numberCount) + " numbers");  // tell client i got the message
-      // each pixel is 3 numbers. loop over them and set
-      for (int i=0; i<numberCount/3; i++) {
-        // Serial.println("LOG setting " + String(numbers[i*3]) + " " + String(numbers[i*3+1]) + " to " + String(numbers[i*3+2]));
-        screenSetPixel(numbers[i*3], numbers[i*3+1], numbers[i*3+2]);
-      }
-    // }
+      screenSetPixels(numbers[0], numbers[1], numbers[2], &numbers[3]);
+    
+      return;  // skip delay
+    }
 
     // else {
     //   Serial.println("ERROR unknown message type " + message.type);

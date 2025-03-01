@@ -2,7 +2,7 @@ import asyncio
 import serial_asyncio
 
 from config import SERIAL_PORT, SERIAL_BAUD_RATE
-from utils import get_pixels
+from utils import get_pixels, get_pixel_chunks
 
 def split_message(message):
     words = message.split(' ', 1)  # split off first word from others
@@ -65,7 +65,8 @@ class SerialHandler(asyncio.Protocol):
                 payload = " ".join([str(item) for item in payload])
             message = type + " " + payload
         
-        print("sending message to serial:", message)
+        if type != "PIXEL" and type != "PIXEL_SCALED":
+            print("sending message to serial:", message)
 
         message += "\n"  # add newline
         data = message.encode()  # encode message into binary
@@ -82,14 +83,22 @@ class SerialHandler(asyncio.Protocol):
             self.transport.write(data)
     
     async def send_image(self, image_url):
-        pixels = get_pixels(image_url)
-
         print("sending image to serial")
-        # send 30 pixels at a time (3 numbers for each)
-        chunk_size = 30
-        for i in range(0, len(pixels), chunk_size*3):
-            pixels_chunk = pixels[i:i+chunk_size*3]
-            await self.send_message("PIXEL", pixels_chunk)
+        chunks = get_pixel_chunks(image_url)
+        
+        for chunk in chunks:
+            payload = [chunk["x"], chunk["y"], chunk["size"]]
+            payload.extend(chunk["pixels"])
+            await self.send_message("PIXEL", payload)
+            # wait for a bit to not overflow the buffer
+            await asyncio.sleep(0.01)
+    
+    async def send_image_scaled(self, image_url):
+        pixels = get_pixels(image_url)
+        print(len(pixels), "numbers")
+        # send 25 pixels (each with 3 numbers) at a time
+        for i in range(0, len(pixels), 25*3):
+            await self.send_message("PIXEL_SCALED", pixels[i:i+25*3])
             # wait for a bit to not overflow the buffer
             await asyncio.sleep(0.01)
 

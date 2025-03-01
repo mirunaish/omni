@@ -25,7 +25,14 @@ void screenPrint(String text) {
 }
 
 void screenSetPixel(int x, int y, int color) {
-  tft.drawPixel(x, y, color);
+  if (SCREEN_SCALE == 1) tft.drawPixel(x, y, color);
+  else tft.fillRect(x*SCREEN_SCALE, y*SCREEN_SCALE, SCREEN_SCALE, SCREEN_SCALE, color);
+}
+
+void screenSetPixels(int x, int y, int size, int colors[MAX_PIXELS]) {
+  // set colors of pixels in the size*size rectangle with corner at x, y
+  tft.setAddrWindow(x, y, size, size);
+  tft.pushColors(colors, size*size);
 }
 
 void screenLoop() {
