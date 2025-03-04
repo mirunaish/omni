@@ -12,6 +12,21 @@ export async function fetchUser(userId) {
   }
 }
 
+/** this is a very ugly function but making it better is not high priority right now */
+export async function fetchUserByDiscordId(discordId) {
+  try {
+    const keys = await redis.keys("*");
+    for (const key of keys) {
+      const user = await fetchUser(key);
+      if (user.discordId === discordId) return { userId: key, ...user };
+    }
+    return null;
+  } catch (error) {
+    console.error("failed to fetch user by discord id:", error);
+    return null;
+  }
+}
+
 export async function storeUser(userId, discordId, pairId) {
   try {
     await redis.set(userId, JSON.stringify({ discordId, pairId }));

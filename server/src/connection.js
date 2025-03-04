@@ -1,11 +1,11 @@
 import { MessageTypes } from "./messageTypes.js";
 import { uuid } from "./utils.js";
-import { storeUser, updatePair, fetchUser } from "./redis.js";
+import { storeUser, updatePair, fetchUser, deletePairing } from "./redis.js";
+import { discord } from "./discordConnection.js";
 
 /** dictionary of all clients */
 export const clients = {};
 export const userIdToClientId = {}; // map user id to client id
-export const discordIdToUserId = {}; // only for logged in users
 
 export function addClient(ws) {
   // assign this client an id
@@ -19,7 +19,7 @@ export function addClient(ws) {
   });
 
   // when i receive a message
-  ws.on("message", (rawMessage) => {
+  ws.on("message", async (rawMessage) => {
     try {
       // parse message into object
       const message = JSON.parse(rawMessage.toString());
@@ -27,7 +27,7 @@ export function addClient(ws) {
         `server received message from client ${id}: ${JSON.stringify(message)}`
       );
 
-      clients[id].handleMessage(message);
+      await clients[id].handleMessage(message);
     } catch (e) {
       console.error(`client ${id} handler encountered an error: ${e}`);
       console.error(e.stack);
@@ -44,7 +44,6 @@ export function addClient(ws) {
 
     // remove client
     delete userIdToClientId[clients[id].userId];
-    delete discordIdToUserId[clients[id].discordId];
     delete clients[id];
   });
 
@@ -62,12 +61,12 @@ export class ClientHandler {
     this.discordId = null; // this user's discord id
   }
 
-  handleMessage(message) {
+  async handleMessage(message) {
     if (message.type === MessageTypes.SIGNUP) {
-      this.signup();
+      await this.signup();
       return;
     } else if (message.type === MessageTypes.LOGIN) {
-      this.login(message.payload);
+      await this.login(message.payload);
       return;
     }
     // if the message is any other type, the user must be logged in and paired
@@ -105,7 +104,7 @@ export class ClientHandler {
   }
 
   /** assign this client a new user id */
-  signup() {
+  async signup() {
     this.userId = uuid();
     userIdToClientId[this.userId] = this.id;
 
@@ -116,12 +115,12 @@ export class ClientHandler {
     });
 
     // store the new user in the database (null discordId and paidId)
-    storeUser(this.userId, null, null);
+    await storeUser(this.userId, null, null);
   }
 
-  login(userId) {
+  async login(userId) {
     // get user from database
-    const user = fetchUser(userId);
+    const user = await fetchUser(userId);
     if (!user) {
       // report error to user
       this.reportError("user not found");
@@ -135,7 +134,6 @@ export class ClientHandler {
 
     if (discordId) {
       this.discordId = discordId;
-      discordIdToUserId[discordId] = userId;
     }
 
     // attempt to connect to pair, if my pair is online
@@ -149,17 +147,11 @@ export class ClientHandler {
   }
 
   /** given another client's userId, pair with them */
-  pair(userId, requestId) {
-    // unpair from my current pair
-    unpair();
-
-    // find the requested user
-    const otherUser = clients[userIdToClientId[userId]];
-
-    // if the other user is already paired, report error
-    if (otherUser.pairId) {
-      discord.reportError("the other user is already paired", requestId);
-      return;
+  async pair(otherUser) {
+    const oldPairId = this.pairId;
+    if (oldPairId) {
+      // if i have a pair, unpair from them
+      await this.unpair();
     }
 
     // set the pair id
@@ -168,15 +160,15 @@ export class ClientHandler {
     otherUser.pairId = this.id;
 
     // save this pairing to the db, in both directions
-    updatePair(this.userId, otherUser.userId);
-    updatePair(otherUser.userId, this.userId);
+    await updatePair(this.userId, otherUser.userId);
+    await updatePair(otherUser.userId, this.userId);
 
-    discord.sendMessage({ type: MessageTypes.SUCCESS, requestId });
+    return oldPairId;
   }
 
-  unpair() {
+  async unpair() {
     // clear the persisted pairing in the database
-    deletePairing(this.userId);
+    await deletePairing(this.userId);
 
     this.pairId = null;
 

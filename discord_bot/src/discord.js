@@ -10,6 +10,8 @@ export const Discord = {
     const command = words[0];
     words = words.slice(1); // remove command
 
+    console.log("bot received command", command, "with args", words);
+
     if (command === "connect") Discord.connect(message, words);
     else if (command === "pair") Discord.pair(message, words);
     else if (command === "unpair") Discord.unpair(message, words);
@@ -40,7 +42,7 @@ export const Discord = {
     }
 
     const requesterId = message.author.id;
-    const requestedId = words[0];
+    const requestedId = words[0].replace(/<@|!|>/g, "");
     Discord.makeServerRequest(message, {
       type: "PAIR",
       payload: { requesterId, requestedId },
@@ -83,19 +85,12 @@ export const Discord = {
     }
 
     let messageText = "";
-    if (request.type === "DISCORD_LOGIN" && message.type === "SUCCESS")
-      messageText = `<@${request.payload.discordId}> and robot ${request.payload.userId} successfully connected`;
-    if (request.type === "DISCORD_LOGIN" && message.type === "ERROR")
+    if (message.type === "SUCCESS") messageText = message.payload;
+    else if (request.type === "DISCORD_LOGIN" && message.type === "ERROR")
       messageText = `could not log in: ${message.payload}`;
-
-    if (request.type === "PAIR" && message.type === "SUCCESS")
-      messageText = `<@${request.payload.requesterId}> is now paired with <@${request.payload.requestedId}>`;
-    if (request.type === "PAIR" && message.type === "ERROR")
+    else if (request.type === "PAIR" && message.type === "ERROR")
       messageText = `could not pair: ${message.payload}`;
-
-    if (request.type === "UNPAIR" && message.type === "SUCCESS")
-      messageText = `<@${request.payload}> is no longer paired`;
-    if (request.type === "UNPAIR" && message.type === "ERROR")
+    else if (request.type === "UNPAIR" && message.type === "ERROR")
       messageText = `could not unpair: ${message.payload}`;
 
     if (messageText === "") {
