@@ -35,8 +35,6 @@ void setup() {
   // rightArm.calibrate();
 
   frames = 0;
-
-  screen.makeExpression("SMILE");
 }
 
 int colors[MAX_PIXELS];  // here so i don't have to constantly reallocate

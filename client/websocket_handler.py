@@ -62,12 +62,9 @@ class WebsocketHandler():
         elif type == "ERROR":
             print("got error from server:", payload)
         
-        elif type == "HEADPAT":
+        elif type == "HEADPAT" or type == "WAVE" or type == "EXPRESSION":
             # forward to serial
-            await serial.send_message(message)
-        elif type == "WAVE":
-            # forward to serial
-            await serial.send_message(message)
+            await serial.send_message(type, payload)
 
         else:
             print("unknown message type:", type)

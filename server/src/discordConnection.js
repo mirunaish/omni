@@ -65,10 +65,10 @@ export class DiscordHandler {
           );
       }
     } catch (e) {
-      if (e instanceof UserError && message.requestId) {
+      if (e instanceof UserError) {
         console.error(`user error: ${e.message}`);
-        this.reportError(e.message, message.requestId);
-      }
+        if (message.requestId) this.reportError(e.message, message.requestId);
+      } else throw e;
     }
   }
 
@@ -78,8 +78,9 @@ export class DiscordHandler {
     return userId;
   }
   async getClient(discordId) {
-    const client = await clients[userIdToClientId[getUserId(discordId)]];
+    const client = clients[userIdToClientId[await this.getUserId(discordId)]];
     if (!client) throw new UserError("you are not currently logged in");
+    return client;
   }
 
   async discordLogin({ userId, discordId }, requestId) {
