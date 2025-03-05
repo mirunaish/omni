@@ -18,7 +18,6 @@ int frames = 0; // for testing, will be removed
 void setup() {
   // start serial for communicating with the client
   Serial.begin(1000000);  // 1 million!!! bits per second
-  Serial.setTimeout(2000);
   Serial.println("LOG arduino is setting up");
 
   // set up all the parts of the robot
@@ -38,7 +37,7 @@ void setup() {
   frames = 0;
 }
 
-int numbers[3 + MAX_PIXELS];
+int colors[MAX_PIXELS];  // here so i don't have to constantly reallocate
 
 void loop() {
   // TODO remove this vvv
@@ -47,10 +46,10 @@ void loop() {
 
   // listen for messages from serial
   if (Serial.available()) {
-    // type = Serial.readStringUntil(' ');  // read message type
+    String type = Serial.readStringUntil(' ');  // read message type
     // depending on type, each component will read the rest of the data
     
-    Message message = readMessageFromSerial();
+    Message message; // = readMessageFromSerial();
 
     if (message.type == "HEADPAT") {
       cheeks.blush();
@@ -68,28 +67,42 @@ void loop() {
       else Serial.println("ERROR unknown arm " + name);
     }
 
-    else if (message.type == "PIXEL_SCALED") {
-      int numberCount = 0;
-      parseNumbers(message.payload, numbers, &numberCount);
-      Serial.println("LOG received " + String(numberCount) + " numbers");  // tell client i got the message
-      for (int i=0; i<numberCount/3; i++) {
-        screen.setPixel(numbers[i*3], numbers[i*3+1], numbers[i*3+2]);
-      }
-      return;  // skip delay
-    }
+    // else if (message.type == "PIXEL_SCALED") {
+    //   int numberCount = 0;
+    //   parseNumbers(message.payload, numbers, &numberCount);
+    //   Serial.println("LOG received " + String(numberCount) + " numbers");  // tell client i got the message
+    //   for (int i=0; i<numberCount/3; i++) {
+    //     screen.setPixel(numbers[i*3], numbers[i*3+1], numbers[i*3+2]);
+    //   }
+    //   return;  // skip delay
+    // }
 
-    else if (message.type == "PIXEL") {
-      int numberCount = 0;
-      parseNumbers(message.payload, numbers, &numberCount);
-      Serial.println("LOG received " + String(numberCount) + " numbers");  // tell client i got the message
-      screen.setPixels(numbers[0], numbers[1], numbers[2], &numbers[3]);
-    
-      return;  // skip delay
+    // else if (message.type == "PIXEL") {
+    //   int numberCount = 0;
+    //   parseNumbers(message.payload, numbers, &numberCount);
+    //   Serial.println("LOG received " + String(numberCount) + " numbers");  // tell client i got the message
+    //   screen.setPixels(numbers[0], numbers[1], numbers[2], &numbers[3]);
+    // }
+
+    else if (type == "PIXEL_BYTES") {
+      // message format is: x y size [colors as 16 bit ints]
+      // read x y and size
+      int values[3];
+      readIntsFromSerial(values, 3);
+      // there should be size*size uint_16 bytes being sent. read them
+      readIntsFromSerial(colors, values[2]*values[2]);
+      screen.setPixels(values[0], values[1], values[2], colors);
+
+      // don't do anything else (esp delay). just loop again to read the next message
+      readUntilEndline();
+      return;
     }
 
     else {
-      Serial.println("ERROR unknown message type " + message.type);
+      Serial.println("ERROR unknown message type " + type);
     }
+
+    readUntilEndline();  // read any extra stuff that may be in the buffer
   }
 
   // tell sensors to listen for changes and outputs to update their values

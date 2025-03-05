@@ -4,6 +4,7 @@ import json
 
 from config import SERVER_URL
 from user_id_cache import load_id, save_id
+from utils import terminate
 
 class WebsocketHandler():
     def __init__(self):
@@ -41,6 +42,7 @@ class WebsocketHandler():
                 self.queue.put_nowait(("websocket", message))
         except Exception as e:
             print("disconnected from server:", e)
+            terminate()
 
     # send a message to the server
     async def send_message(self, type, payload):

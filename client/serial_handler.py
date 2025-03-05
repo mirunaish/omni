@@ -1,18 +1,9 @@
 import asyncio
 import serial_asyncio
+import struct
 
 from config import SERIAL_PORT, SERIAL_BAUD_RATE
-from utils import get_pixels, get_pixel_chunks
-
-def split_message(message):
-    words = message.split(' ', 1)  # split off first word from others
-    
-    if len(words) > 1:
-        first_word, remaining_message = words
-        return first_word, remaining_message
-    else:
-        # no space. only one word
-        return message, None
+from utils import get_pixels, get_pixel_chunks, terminate, split_message
 
 class SerialHandler(asyncio.Protocol):
     def __init__(self):
@@ -30,7 +21,7 @@ class SerialHandler(asyncio.Protocol):
             print("couldn't connect to serial:", e)
     
     def connection_made(self, transport):
-        print("serial connected")
+        print("serial connected on", SERIAL_PORT)
         self.transport = transport
 
     # serial_asyncio handles receiving messages
@@ -39,7 +30,11 @@ class SerialHandler(asyncio.Protocol):
 
     async def data_received_async(self, data):
         await self.bufferLock.acquire()
-        messages = data.decode()  # decode binary data into messages
+        try:
+            messages = data.decode()  # decode binary data into messages
+        except UnicodeDecodeError:
+            print("couldn't decode data from serial")
+            terminate()
         # data is not guaranteed to be a full message
         # so we buffer it and split it into messages
         self.buffer += messages
@@ -81,6 +76,24 @@ class SerialHandler(asyncio.Protocol):
                 await asyncio.sleep(0.01)
         else:
             self.transport.write(data)
+
+    async def send_message_bytes(self, type, payload):
+        message = None
+        type_encoded = type.encode()
+
+        if payload is None:
+            message = type_encoded
+        else:
+            if isinstance(payload, list):
+                payload_encoded = b''.join([struct.pack('H', i) for i in payload])
+            else:
+                payload_encoded = payload.encode()
+            message = type_encoded + (' '.encode()) + payload_encoded + ('\n'.encode())
+        
+        # if type != "PIXEL" and type != "PIXEL_SCALED":
+        # print("sending message to serial:", message)
+
+        self.transport.write(message)
     
     async def send_image(self, image_url):
         print("sending image to serial")
@@ -92,6 +105,18 @@ class SerialHandler(asyncio.Protocol):
             await self.send_message("PIXEL", payload)
             # wait for a bit to not overflow the buffer
             await asyncio.sleep(0.01)
+
+    async def send_image_bytes(self, image_url):
+        print("sending image to serial")
+        chunks = get_pixel_chunks(image_url)
+        
+        for chunk in chunks:
+            payload = [chunk["x"], chunk["y"], chunk["size"]]
+            payload.extend(chunk["pixels"])
+            await self.send_message_bytes("PIXEL_BYTES", payload)
+            # await self.send_message("PIXEL", payload)
+            # wait for a bit to not overflow the buffer
+            # await asyncio.sleep(0.01)
     
     async def send_image_scaled(self, image_url):
         pixels = get_pixels(image_url)
@@ -102,8 +127,9 @@ class SerialHandler(asyncio.Protocol):
             # wait for a bit to not overflow the buffer
             await asyncio.sleep(0.01)
 
-    def connection_lost(self, exc):
-        print("disconnected from serial: ", exc)
+    def connection_lost(self, error):
+        print("disconnected from serial: ", error)
+        terminate()
 
     async def process_message(self, message, socket):
         # handle messages from serial
@@ -117,7 +143,7 @@ class SerialHandler(asyncio.Protocol):
             await socket.send_message(type, payload)
 
         elif type == "SEND_ME_THE_IMAGE":
-            await self.send_image("oiia.jpg")
+            await self.send_image_bytes("oiia.jpg")
         
         elif type == "LOG":
             print("arduino logged:", payload)
@@ -125,4 +151,3 @@ class SerialHandler(asyncio.Protocol):
             print("arduino reported error:", payload)
         else:
             print("unknown message from serial:", type)
-        

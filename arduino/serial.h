@@ -84,3 +84,40 @@ Message readMessageFromSerial() {
   
   return message;
 }
+
+/** returns number of ints read */
+int readIntsFromSerial(int *buffer, size_t count) {
+  size_t bytesToRead = count * 2;  // an int is 2 bytes
+  size_t bytesRead = 0;
+
+  while (bytesRead < bytesToRead) {
+    if (Serial.available() >= 2) {
+      uint8_t lowByte = Serial.read();
+      uint8_t highByte = Serial.read();
+      buffer[bytesRead / 2] = (highByte << 8) | lowByte;  // combine both bytes into a single 16-bit number
+      bytesRead += 2;
+    }
+  }
+
+  return bytesRead / 2;
+}
+
+/**
+ * serial prints endlines so messages are human readable.
+ * if arduino doesn't need it, use this function to remove it from serial buffer
+ * this also has the benefit of recovering from errors caused by buffer overflow
+ */
+void readUntilEndline() {
+  char byte = 0;
+  int charsRead = 0;
+
+  while (byte != '\n') {
+    if (Serial.available()) {
+      byte = Serial.read();
+      charsRead++;
+    }
+  }
+
+  if (charsRead == 0) Serial.println("ERROR readUntilEndline failed to read endline");
+  if (charsRead > 1) Serial.println("ERROR readUntilEndline read " + String(charsRead - 1) + " non-endline characters");
+}

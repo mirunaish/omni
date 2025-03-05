@@ -1,6 +1,22 @@
+from sys import exit
+
 from PIL import Image
 
 from config import SCREEN_SIZE, CHUNK_SIZE, SCREEN_SCALE
+
+def terminate():
+    print("terminating client")
+    exit()
+
+def split_message(message):
+    words = message.split(' ', 1)  # split off first word from others
+    
+    if len(words) > 1:
+        first_word, remaining_message = words
+        return first_word, remaining_message
+    else:
+        # no space. only one word
+        return message, None
 
 def color565(r, g, b):
     # Ensure the values are within the valid range (0-255)
