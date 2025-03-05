@@ -21,4 +21,4 @@ const int WAVE_ACCURACY = 3;  // how close to the reported value to try to move 
 
 // screen
 const int MAX_PIXELS = 24*24;  // at most 24x24 chunks
-const int SCREEN_SCALE = 5;  // reduce resolution so images work faster...
+const int SCREEN_SCALE = 5;  // reduce resolution so images work faster... currently unused

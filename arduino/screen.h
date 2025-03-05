@@ -20,7 +20,7 @@ class Screen {
     void setup() {
       tft.begin();
       tft.setRotation(2);  // TODO change back to 0?
-      tft.fillScreen(0x0000);  // initialize to black
+      reset();  // initialize to black
     }
 
     void print(String text) {
@@ -29,6 +29,10 @@ class Screen {
       tft.setCursor(20, cursorY);
       tft.println(text);
       cursorY+=10;
+    }
+
+    void reset() {
+      tft.fillScreen(0x0000);  // fill screen with black
     }
 
     void setPixel(int x, int y, int color) {

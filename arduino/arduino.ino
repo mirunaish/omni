@@ -46,7 +46,7 @@ void loop() {
 
   // listen for messages from serial
   if (Serial.available()) {
-    String type = Serial.readStringUntil(' ');  // read message type
+    String type = Serial.readStringUntil(';');  // read message type
     // depending on type, each component will read the rest of the data
     
     Message message; // = readMessageFromSerial();
@@ -67,24 +67,11 @@ void loop() {
       else Serial.println("ERROR unknown arm " + name);
     }
 
-    // else if (message.type == "PIXEL_SCALED") {
-    //   int numberCount = 0;
-    //   parseNumbers(message.payload, numbers, &numberCount);
-    //   Serial.println("LOG received " + String(numberCount) + " numbers");  // tell client i got the message
-    //   for (int i=0; i<numberCount/3; i++) {
-    //     screen.setPixel(numbers[i*3], numbers[i*3+1], numbers[i*3+2]);
-    //   }
-    //   return;  // skip delay
-    // }
+    else if (type == "RESET_SCREEN") {
+      screen.reset();
+    }
 
-    // else if (message.type == "PIXEL") {
-    //   int numberCount = 0;
-    //   parseNumbers(message.payload, numbers, &numberCount);
-    //   Serial.println("LOG received " + String(numberCount) + " numbers");  // tell client i got the message
-    //   screen.setPixels(numbers[0], numbers[1], numbers[2], &numbers[3]);
-    // }
-
-    else if (type == "PIXEL_BYTES") {
+    else if (type == "PIXELS") {
       // message format is: x y size [colors as 16 bit ints]
       // read x y and size
       int values[3];
@@ -106,12 +93,10 @@ void loop() {
   }
 
   // tell sensors to listen for changes and outputs to update their values
-  
   head.loop();
   cheeks.loop();
   // leftArm.loop();
   // rightArm.loop();
-
   screen.loop();
 
   Serial.flush();  // force serial to write data
