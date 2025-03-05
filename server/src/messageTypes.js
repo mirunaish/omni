@@ -21,4 +21,5 @@ export const MessageTypes = {
   HEADPAT: "HEADPAT",
   WAVE: "WAVE",
   EXPRESSION: "EXPRESSION", // from discord bot
+  IMAGE: "IMAGE", // from discord bot
 };

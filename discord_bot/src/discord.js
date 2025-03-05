@@ -27,6 +27,7 @@ export const Discord = {
 
   handleDiscordMessage: (message) => {
     Discord.checkForEmojis(message);
+    Discord.checkForImages(message);
   },
 
   checkForEmojis: (message) => {
@@ -42,6 +43,21 @@ export const Discord = {
 
         break; // stop after 1 emoji
       }
+    }
+  },
+
+  checkForImages: (message) => {
+    if (message.attachments.size == 0) return;
+
+    for (const attachment of message.attachments.values()) {
+      if (attachment.contentType.startsWith("image/")) {
+        console.log("sending image to server", attachment.name);
+        sendToServer({
+          type: "IMAGE",
+          payload: { discordId: message.author.id, url: attachment.url },
+        });
+      }
+      return;
     }
   },
 

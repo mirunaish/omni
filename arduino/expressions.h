@@ -44,5 +44,5 @@ int* chooseExpression(String exp) {
   else if (exp == "SAD") return SAD;
   // etc....
 
-  else Serial.println("ERROR unrecognized expression" + exp);
+  else Serial.println("ERROR unrecognized expression " + exp);
 }

@@ -75,13 +75,18 @@ class SerialHandler(asyncio.Protocol):
 
         self.transport.write(message)
 
+    async def send_image_reset(self):
+        await self.send_message("RESET_SCREEN", None)
+        await asyncio.sleep(0.5)  # wait for screen to reset...
+
     async def send_image(self, image_url):
         print("sending image to serial")
         chunks = get_pixel_chunks(image_url)
+        if (chunks is None):
+            return
 
         # first send an image reset
-        await self.send_message("RESET_SCREEN", None)
-        await asyncio.sleep(0.5)  # wait for screen to reset...
+        await self.send_image_reset()
 
         # aquire lock to prevent other messages from interfering with the string of PIXELs
         async with self.serial_lock:
@@ -91,6 +96,12 @@ class SerialHandler(asyncio.Protocol):
                 await self.send_message_bytes("PIXELS", payload)
                 # wait for a bit to not overflow the buffer
                 # await asyncio.sleep(0.01)
+
+    async def send_expression(self, name):
+        # first send an image reset
+        await self.send_image_reset()
+        # send the expression message
+        await self.send_message("EXPRESSION", name)
 
     def connection_lost(self, error):
         print("disconnected from serial: ", error)
@@ -106,9 +117,6 @@ class SerialHandler(asyncio.Protocol):
         elif type == "WAVE":
             # forward to websocket
             await socket.send_message(type, payload)
-
-        # elif type == "SEND_ME_THE_IMAGE":
-        #     await self.send_image("oiia.jpg")
         
         elif type == "LOG":
             print("arduino logged:", payload)

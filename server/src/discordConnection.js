@@ -55,7 +55,10 @@ export class DiscordHandler {
           break;
 
         case MessageTypes.EXPRESSION:
-          await this.expression(message.payload);
+          await this.forwardToPair(message.type, message.payload);
+          break;
+        case MessageTypes.IMAGE:
+          await this.forwardToPair(message.type, message.payload);
           break;
 
         default:
@@ -160,10 +163,13 @@ export class DiscordHandler {
     });
   }
 
-  async expression({ discordId, expressionName }) {
+  async forwardToPair(type, payloadWithId) {
+    let { discordId, ...payload } = payloadWithId;
+
     const user = await this.getClient(discordId);
 
-    user.sendToPairedUser({ type: "EXPRESSION", payload: expressionName });
+    if (Object.values(payload).length == 1) payload = Object.values(payload)[0];
+    user.sendToPairedUser({ type, payload });
   }
 
   sendMessage(message) {
