@@ -17,23 +17,23 @@ int frames = 0; // for testing, will be removed
 
 void setup() {
   // start serial for communicating with the client
-  Serial.begin(9600);
+  Serial.begin(1000000);  // 1 million!!! bits per second
   Serial.setTimeout(2000);
   Serial.println("LOG arduino is setting up");
 
   // set up all the parts of the robot
 
-  head = ForceSensor(A4);
-  cheeks = LED(4);
+  head.setup(A4);
+  cheeks.setup(4);
 
-  leftArm = Arm(A0, 2, "LEFT");
-  rightArm = Arm(A2, 3, "RIGHT");
+  leftArm.setup(A0, 2, "LEFT");
+  rightArm.setup(A2, 3, "RIGHT");
 
-  screen = Screen();
+  screen.setup();
 
   // calibrate arms
-  leftArm.calibrate();
-  rightArm.calibrate();
+  // leftArm.calibrate();
+  // rightArm.calibrate();
 
   frames = 0;
 }
@@ -41,6 +41,7 @@ void setup() {
 int numbers[3 + MAX_PIXELS];
 
 void loop() {
+  // TODO remove this vvv
   if (frames == 10) Serial.println("SEND_ME_THE_IMAGE");
   frames++;
 
@@ -95,8 +96,8 @@ void loop() {
   
   head.loop();
   cheeks.loop();
-  leftArm.loop();
-  rightArm.loop();
+  // leftArm.loop();
+  // rightArm.loop();
 
   screen.loop();
 

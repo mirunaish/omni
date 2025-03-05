@@ -21,7 +21,7 @@ class Arm {
   public:
     Arm() {}
 
-    Arm(int potPin, int servoPin, String name) {
+    void setup(int potPin, int servoPin, String name) {
       this->potPin = potPin;
       this->servoPin = servoPin;
       this->name = name;

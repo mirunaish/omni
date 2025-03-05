@@ -11,7 +11,7 @@ class ForceSensor {
   public:
     ForceSensor() {}
     
-    ForceSensor(int pinId) {
+    void setup(int pinId) {
       this->pinId = pinId;
     }
 
