@@ -15,8 +15,8 @@ class Arm {
     int movingTo = -1;  // where pair told me to move...
     int attempts = 0;
 
-    int minAngleValue;  // pot calibration
-    int maxAngleValue;
+    int minAngleValue = 1024;  // set during pot calibration
+    int maxAngleValue = 0;
 
   public:
     Arm() {}

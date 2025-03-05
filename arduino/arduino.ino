@@ -97,8 +97,8 @@ void loop() {
   // tell sensors to listen for changes and outputs to update their values
   head.loop();
   cheeks.loop();
-  // leftArm.loop();
-  // rightArm.loop();
+  leftArm.loop();
+  rightArm.loop();
   screen.loop();
 
   Serial.flush();  // force serial to write data
