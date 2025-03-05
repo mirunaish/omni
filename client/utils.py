@@ -18,6 +18,7 @@ def split_message(message):
         # no space. only one word
         return message, None
 
+# chatgpt wrote this vvv
 def color565(r, g, b):
     # Ensure the values are within the valid range (0-255)
     r = max(0, min(255, r))
@@ -31,18 +32,6 @@ def color565(r, g, b):
 
     # Combine them into one 16-bit value
     return (r_5bit << 11) | (g_6bit << 5) | b_5bit
-
-def get_pixels(image_url):
-    pixels = []
-    size = int(SCREEN_SIZE / SCREEN_SCALE)
-    with Image.open(image_url) as image:
-        image.thumbnail((size, size))
-
-        for y in range(size):
-            for x in range(size):
-                pixel = image.getpixel((x, y))
-                pixels.extend([x, y, color565(pixel[0], pixel[1], pixel[2])])
-    return pixels
 
 def get_pixel_chunks(image_url):
     chunks = []

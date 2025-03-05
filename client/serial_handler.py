@@ -3,7 +3,7 @@ import serial_asyncio
 import struct
 
 from config import SERIAL_PORT, SERIAL_BAUD_RATE
-from utils import get_pixels, get_pixel_chunks, terminate, split_message
+from utils import get_pixel_chunks, terminate, split_message
 
 class SerialHandler(asyncio.Protocol):
     def __init__(self):
@@ -107,8 +107,8 @@ class SerialHandler(asyncio.Protocol):
             # forward to websocket
             await socket.send_message(type, payload)
 
-        elif type == "SEND_ME_THE_IMAGE":
-            await self.send_image("oiia.jpg")
+        # elif type == "SEND_ME_THE_IMAGE":
+        #     await self.send_image("oiia.jpg")
         
         elif type == "LOG":
             print("arduino logged:", payload)

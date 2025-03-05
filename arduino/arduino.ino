@@ -35,6 +35,8 @@ void setup() {
   // rightArm.calibrate();
 
   frames = 0;
+
+  screen.makeExpression("SMILE");
 }
 
 int colors[MAX_PIXELS];  // here so i don't have to constantly reallocate
@@ -65,6 +67,12 @@ void loop() {
 
     else if (type == "RESET_SCREEN") {
       screen.reset();
+    }
+
+    else if (type == "EXPRESSION") {
+      // message format is: expressionName
+      String expressionName = Serial.readStringUntil('\n');
+      screen.makeExpression(expressionName);
     }
 
     else if (type == "PIXELS") {
