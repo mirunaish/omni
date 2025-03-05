@@ -1,4 +1,5 @@
 import { clients, userIdToClientId } from "./connection.js";
+import { UserError } from "./errors.js";
 import { MessageTypes } from "./messageTypes.js";
 import { fetchUser, fetchUserByDiscordId, updateDiscordId } from "./redis.js";
 
@@ -40,32 +41,51 @@ export class DiscordHandler {
   }
 
   async handleMessage(message) {
-    switch (message.type) {
-      case MessageTypes.DISCORD_LOGIN:
-        await this.discordLogin(message.payload, message.requestId);
-        break;
+    try {
+      switch (message.type) {
+        case MessageTypes.DISCORD_LOGIN:
+          await this.discordLogin(message.payload, message.requestId);
+          break;
 
-      case MessageTypes.PAIR:
-        await this.pair(message.payload, message.requestId);
-        break;
-      case MessageTypes.UNPAIR:
-        await this.unpair(message.payload, message.requestId);
-        break;
+        case MessageTypes.PAIR:
+          await this.pair(message.payload, message.requestId);
+          break;
+        case MessageTypes.UNPAIR:
+          await this.unpair(message.payload, message.requestId);
+          break;
 
-      default:
-        this.reportError(
-          `unknown message type ${message.type}`,
-          message.requestId
-        );
+        case MessageTypes.EXPRESSION:
+          await this.expression(message.payload);
+          break;
+
+        default:
+          this.reportError(
+            `unknown message type ${message.type}`,
+            message.requestId
+          );
+      }
+    } catch (e) {
+      if (e instanceof UserError && message.requestId) {
+        console.error(`user error: ${e.message}`);
+        this.reportError(e.message, message.requestId);
+      }
     }
+  }
+
+  async getUserId(discordId) {
+    const userId = (await fetchUserByDiscordId(discordId))?.userId;
+    if (!userId) throw new UserError("you are not connected to discord");
+    return userId;
+  }
+  async getClient(discordId) {
+    const client = await clients[userIdToClientId[getUserId(discordId)]];
+    if (!client) throw new UserError("you are not currently logged in");
   }
 
   async discordLogin({ userId, discordId }, requestId) {
     const client = clients[userIdToClientId[userId]];
-    if (!client) {
-      this.reportError("the user id is not correct", requestId);
-      return;
-    }
+    if (!client) throw new UserError("the user id is not correct");
+
     // set this client's discord id
     client.discordId = discordId;
     // set the persisted ids
@@ -81,44 +101,24 @@ export class DiscordHandler {
 
   async pair({ requesterId, requestedId }, requestId) {
     // find clients that are being connected
-    const requesterUserId = (await fetchUserByDiscordId(requesterId)).userId;
-    const requestedUserId = (await fetchUserByDiscordId(requestedId)).userId;
-    if (!requesterUserId && !requestedUserId) {
-      this.reportError("neither user is connected to discord", requestId);
-      return;
-    } else if (!requesterUserId) {
-      this.reportError("you are not connected to discord", requestId);
-      return;
-    } else if (!requestedUserId) {
-      this.reportError("your pair is not connected to discord", requestId);
-      return;
-    }
+    const requester = this.getClient(requesterId);
 
-    const requester = clients[userIdToClientId[requesterUserId]];
+    const requestedUserId = await this.getUserId(requestedId);
+    if (!requestedUserId)
+      throw new UserError("your pair is not connected to discord");
+
     const requested = clients[userIdToClientId[requestedUserId]];
-
-    if (!requester && !requested) {
-      this.reportError("neither user is currently logged in", requestId);
-      return;
-    } else if (!requester) {
-      this.reportError("you are not currently logged in", requestId);
-      return;
-    } else if (!requested) {
-      this.reportError("your pair is not currently logged in", requestId);
-      return;
-    }
+    if (!requested) throw new UserError("your pair is not currently logged in");
 
     // if the other user is already paired, report error
-    if (requested.pairId) {
-      this.reportError("the other user is already paired", requestId);
-      return;
-    }
+    if (requested.pairId)
+      throw new UserError("the other user is already paired");
 
     const oldPairId = await requester.pair(requested);
 
     // let old pair know they've been unpaired
     if (oldPairId) {
-      const oldPairDiscordId = (await fetchUser(oldPairId))?.discordId;
+      const oldPairDiscordId = (await fetchUser(oldPairId)).discordId;
 
       this.sendMessage({
         type: MessageTypes.SUCCESS,
@@ -136,16 +136,8 @@ export class DiscordHandler {
 
   async unpair(requesterId, requestId) {
     // find client being unpaired
-    const requesterUserId = (await fetchUserByDiscordId(requesterId)).userId;
-    if (!requesterUserId) {
-      this.reportError("you are not connected to discord", requestId);
-      return;
-    }
-    const requester = clients[userIdToClientId[requesterUserId]];
-    if (!requester) {
-      this.reportError("you are not currently logged in", requestId);
-      return;
-    }
+    const requester = this.getClient(requesterId);
+
     if (!requester.pairId) {
       this.reportError("you are not paired", requestId);
       return;
@@ -165,6 +157,12 @@ export class DiscordHandler {
       payload: `<@${requester.discordId}> and <@${oldPairDiscordId}> are no longer paired`,
       requestId,
     });
+  }
+
+  async expression({ discordId, expressionName }) {
+    const user = await this.getClient(discordId);
+
+    user.sendToPairedUser({ type: "EXPRESSION", payload: expressionName });
   }
 
   sendMessage(message) {
