@@ -101,7 +101,7 @@ These are messages that the Arduino receives:
 | Message type | Payload           | Description                                          |
 | ------------ | ----------------- | ---------------------------------------------------- |
 | HEADPAT      | none              |                                                      |
-| WAVE         | value             | value is new position                                |
+| WAVE         | name value        |                                                      |
 | RESET_SCREEN | none              | resets screen back to black                          |
 | PIXELS       | x y size [colors] | a chunk with corner x, y. colors are size\*size ints |
 

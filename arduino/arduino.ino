@@ -48,19 +48,15 @@ void loop() {
   if (Serial.available()) {
     String type = Serial.readStringUntil(';');  // read message type
     // depending on type, each component will read the rest of the data
-    
-    Message message; // = readMessageFromSerial();
 
-    if (message.type == "HEADPAT") {
+    if (type == "HEADPAT") {
       cheeks.blush();
     }
 
-    else if (message.type == "WAVE") {
-      String words[MAX_WORDS];
-      splitIntoWords(message.payload, words);
-      String name = words[0];
-      int value = words[1].toInt();
-      Serial.println("LOG parsed value from string " + String(value));  // tell client what value i parsed, to make sure it's correct
+    else if (type == "WAVE") {
+      // message format: name value
+      String name = Serial.readStringUntil(' ');
+      int value = Serial.readStringUntil('\n').toInt();
 
       if (name == "LEFT") leftArm.moveTo(value);
       else if (name == "RIGHT") rightArm.moveTo(value);
@@ -89,7 +85,9 @@ void loop() {
       Serial.println("ERROR unknown message type " + type);
     }
 
-    readUntilEndline();  // read any extra stuff that may be in the buffer
+    // read any extra stuff that may be in the buffer
+    // including the endline if the individual messages didn't read it already
+    readUntilEndline();  
   }
 
   // tell sensors to listen for changes and outputs to update their values
