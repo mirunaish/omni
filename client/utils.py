@@ -14,13 +14,13 @@ def terminate():
 
 
 def split_message(message):
-    words = message.split(' ', 1)  # split off first word from others
+    words = message.split(' ')
     
     if len(words) > 1:
-        first_word, remaining_message = words
-        return first_word, remaining_message
+        # return array of words
+        return words[0], words[1:]
     else:
-        # no space. only one word
+        # only one word
         return message, None
 
 

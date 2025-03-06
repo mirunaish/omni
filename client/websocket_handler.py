@@ -47,7 +47,7 @@ class WebsocketHandler():
     # send a message to the server
     async def send_message(self, type, payload):
         message = json.dumps({"type": type, "payload": payload})
-        print("sending message ", message)
+        print("sending message to server ", message)
         try:
             await self.socket.send(message)
         except Exception as e:

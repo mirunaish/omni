@@ -41,8 +41,7 @@ class SerialHandler(asyncio.Protocol):
             self.buffer += messages
             # print("buffer is", repr(self.buffer))
             for message in self.buffer.split("\r\n")[:-1]:
-                message = message.strip()  # remove any leading/trailing whitespace
-                print("received message from serial:", repr(message))
+                # print("received message from serial:", repr(message))
                 self.queue.put_nowait(("serial", message))
             
             # if the last message is complete, clear the buffer
@@ -50,7 +49,7 @@ class SerialHandler(asyncio.Protocol):
                 self.buffer = ""
             # else if there's an incomplete message, keep it in the buffer
             else:
-                self.buffer = self.buffer.split("\n")[-1]
+                self.buffer = self.buffer.split("\r\n")[-1]
 
     async def send_message(self, type, payload):
         async with self.serial_lock:
@@ -59,13 +58,11 @@ class SerialHandler(asyncio.Protocol):
                 if isinstance(payload, list):
                     payload = " ".join([str(item) for item in payload])
                 message += payload
-            
-            # print message without \n
-            print("sending message to serial:", message)
-
             message += "\n"  # add newline
-            data = message.encode()  # encode message into binary
 
+            print("sending message to serial:", repr(message))
+
+            data = message.encode()  # encode message into binary
             self.transport.write(data)
 
     async def send_message_bytes(self, type, payload):
@@ -77,7 +74,7 @@ class SerialHandler(asyncio.Protocol):
 
     async def send_image_reset(self):
         await self.send_message("RESET_SCREEN", None)
-        await asyncio.sleep(0.5)  # wait for screen to reset...
+        await asyncio.sleep(0.8)  # wait for screen to reset...
 
     async def send_image(self, image_url):
         print("sending image to serial")
@@ -116,14 +113,14 @@ class SerialHandler(asyncio.Protocol):
 
         if type == "HEADPAT":
             # forward to websocket
-            await socket.send_message(type, payload)
+            await socket.send_message(type, None)
         elif type == "WAVE":
             # forward to websocket
-            await socket.send_message(type, payload)
+            await socket.send_message(type, {"name": payload[0], "value": int(payload[1])})
         
         elif type == "LOG":
-            print("arduino logged:", payload)
+            print("arduino logged:", repr(" ".join(payload)))
         elif type == "ERROR":
-            print("arduino reported error:", payload)
+            print("arduino reported error:", repr(" ".join(payload)))
         else:
             print("unknown message from serial:", type)
