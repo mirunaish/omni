@@ -98,12 +98,13 @@ These are messages that the Arduino sends:
 
 These are messages that the Arduino receives:
 
-| Message type | Payload           | Description                                          |
-| ------------ | ----------------- | ---------------------------------------------------- |
-| HEADPAT      | none              |                                                      |
-| WAVE         | name value        |                                                      |
-| RESET_SCREEN | none              | resets screen back to black                          |
-| PIXELS       | x y size [colors] | a chunk with corner x, y. colors are size\*size ints |
+| Message type | Payload                    | Description                                          |
+| ------------ | -------------------------- | ---------------------------------------------------- |
+| HEADPAT      | none                       |                                                      |
+| WAVE         | name value                 |                                                      |
+| RESET_SCREEN | none                       | resets screen back to black                          |
+| PIXELS       | x y size [colors] (binary) | a chunk with corner x, y. colors are size\*size ints |
+| EXPRESSION   | [colors] (binary)          | the entire expression image (10x10)                  |
 
 ## Contributors
 

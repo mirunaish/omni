@@ -21,7 +21,7 @@ class Screen {
 
     void setup() {
       tft.begin();
-      tft.setRotation(2);  // TODO change back to 0?
+      tft.setRotation(0);
       reset();  // initialize to black
     }
 

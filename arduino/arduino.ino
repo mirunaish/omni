@@ -40,10 +40,6 @@ void setup() {
 int colors[MAX_PIXELS];  // here so i don't have to constantly reallocate
 
 void loop() {
-  // TODO remove this vvv
-  if (frames == 10) Serial.println("SEND_ME_THE_IMAGE");
-  frames++;
-
   // listen for messages from serial
   if (Serial.available()) {
     String type = Serial.readStringUntil(';');  // read message type
