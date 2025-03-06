@@ -47,6 +47,13 @@ def get_image(image_url):
     image = Image.open(BytesIO(response.content))
     image.thumbnail((SCREEN_SIZE, SCREEN_SIZE))
 
+    if image.width != image.height:
+        # make the image square
+        square_image = Image.new("RGB", (SCREEN_SIZE, SCREEN_SIZE), (0, 0, 0))
+        square_image.paste(image, ((SCREEN_SIZE-image.width)//2, (SCREEN_SIZE-image.height)//2))
+        image.close()
+        return square_image
+
     return image
 
 
