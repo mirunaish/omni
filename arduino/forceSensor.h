@@ -25,9 +25,9 @@ class ForceSensor {
       int value = analogRead(pinId);
 
       // if value is above the threshold, tell serial a pat happened
-      if (value > Consts::patThreshold) {
+      if (value > PAT_THRESHOLD) {
         Serial.println("HEADPAT");
-        this->cooldown = getFrames(Consts::patCooldown);
+        this->cooldown = getFrames(PAT_COOLDOWN);
       }
     }
 };

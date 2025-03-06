@@ -29,7 +29,7 @@ class Arm {
       // attach servo to pin
       this->servo.attach(servoPin);
       // move to neutral
-      this->servo.write(Consts::neutralAngle);
+      this->servo.write(NEUTRAL_ANGLE);
     }
 
     /** when first starting, find mapping of servo to pot, to accurately map back later */
@@ -74,12 +74,12 @@ class Arm {
         currentAngle = angleOfPot;
         attempts++;
         
-        if (abs(currentAngle - movingTo) <= Consts::waveAccuracy) {
+        if (abs(currentAngle - movingTo) <= WAVE_ACCURACY) {
           // destination has been reached
           movingTo = -1;  // no longer moving
         }
 
-        else if (attempts > Consts::waveAttempts) {
+        else if (attempts > WAVE_ATTEMPTS) {
           movingTo = -1;  // no longer moving
           sendPosition();  // but tell pair about my new position
         }
@@ -88,7 +88,7 @@ class Arm {
       }
 
       // otherwise, detect changes above the threshold (but only if not moved my moveTo)
-      if (abs(angleOfPot - currentAngle) >= Consts::waveThreshold) {
+      if (abs(angleOfPot - currentAngle) >= WAVE_THRESHOLD) {
         currentAngle = angleOfPot;
         sendPosition();
       }
