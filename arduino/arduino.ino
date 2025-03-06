@@ -2,33 +2,33 @@
 #include "utils.h"
 #include "serial.h"
 #include "screen.h"
-// #include "arm.h"
-// #include "LED.h"
-// #include "forceSensor.h"
+#include "arm.h"
+#include "LED.h"
+#include "forceSensor.h"
 
-// ForceSensor head;  // force sensor
-// LED cheeks;  // LEDs
-// Arm leftArm;
-// Arm rightArm;
+ForceSensor head;  // force sensor
+LED cheeks;  // LEDs
+Screen screen;  // face
+Arm leftArm;
+Arm rightArm;
 // TODO add speaker
 
 int frames = 0; // for testing, will be removed
 
 void setup() {
   // start serial for communicating with the client
-  Serial.begin(9600);
-  Serial.setTimeout(2000);
+  Serial.begin(1000000);  // 1 million!!! bits per second
   Serial.println("LOG arduino is setting up");
 
   // set up all the parts of the robot
 
-  // head = ForceSensor(A2);
-  // cheeks = LED(3);
+  head.setup(A4);
+  cheeks.setup(4);
 
-  // leftArm = Arm(A0, 6, "LEFT");
-  // rightArm = Arm(A1, 5, "RIGHT");
+  leftArm.setup(A0, 2, "LEFT");
+  rightArm.setup(A2, 3, "RIGHT");
 
-  screenSetup();
+  screen.setup();
 
   // calibrate arms
   // leftArm.calibrate();
@@ -37,64 +37,65 @@ void setup() {
   frames = 0;
 }
 
-int numbers[3 + MAX_PIXELS];
+int colors[MAX_PIXELS];  // here so i don't have to constantly reallocate
 
 void loop() {
+  // TODO remove this vvv
   if (frames == 10) Serial.println("SEND_ME_THE_IMAGE");
   frames++;
 
   // listen for messages from serial
   if (Serial.available()) {
-    // type = Serial.readStringUntil(' ');  // read message type
+    String type = Serial.readStringUntil(';');  // read message type
     // depending on type, each component will read the rest of the data
-    
-    Message message = readMessageFromSerial();
 
-    // if (message.type == "HEADPAT") {
-    //   cheeks.blush();
-    // } else if (message.type == "WAVE") {
-    //   String words[MAX_WORDS];
-    //   splitIntoWords(message.payload, words);
-    //   String name = words[0];
-    //   int value = words[1].toInt();
-    //   Serial.println("LOG parsed value from string " + String(value));  // tell client what value i parsed, to make sure it's correct
-
-    //   if (name == "LEFT") leftArm.moveTo(value);
-    //   else if (name == "RIGHT") rightArm.moveTo(value);
-    //   else Serial.println("ERROR unknown arm " + name);
-    // }
-    // if (message.type == "PIXEL_SCALED") {
-    //   int numberCount = 0;
-    //   parseNumbers(message.payload, numbers, &numberCount);
-    //   Serial.println("LOG received " + String(numberCount) + " numbers");  // tell client i got the message
-    //   for (int i=0; i<numberCount/3; i++) {
-    //     screenSetPixel(numbers[i*3], numbers[i*3+1], numbers[i*3+2]);
-    //   }
-    //   return;  // skip delay
-    // }
-    // else
-    if (message.type == "PIXEL") {
-      int numberCount = 0;
-      parseNumbers(message.payload, numbers, &numberCount);
-      Serial.println("LOG received " + String(numberCount) + " numbers");  // tell client i got the message
-      screenSetPixels(numbers[0], numbers[1], numbers[2], &numbers[3]);
-    
-      return;  // skip delay
+    if (type == "HEADPAT") {
+      cheeks.blush();
     }
 
-    // else {
-    //   Serial.println("ERROR unknown message type " + message.type);
-    // }
+    else if (type == "WAVE") {
+      // message format: name value
+      String name = Serial.readStringUntil(' ');
+      int value = Serial.readStringUntil('\n').toInt();
+
+      if (name == "LEFT") leftArm.moveTo(value);
+      else if (name == "RIGHT") rightArm.moveTo(value);
+      else Serial.println("ERROR unknown arm " + name);
+    }
+
+    else if (type == "RESET_SCREEN") {
+      screen.reset();
+    }
+
+    else if (type == "PIXELS") {
+      // message format is: x y size [colors as 16 bit ints]
+      // read x y and size
+      int values[3];
+      readIntsFromSerial(values, 3);
+      // there should be size*size uint_16 bytes being sent. read them
+      readIntsFromSerial(colors, values[2]*values[2]);
+      screen.setPixels(values[0], values[1], values[2], colors);
+
+      // don't do anything else (esp delay). just loop again to read the next message
+      readUntilEndline();
+      return;
+    }
+
+    else {
+      Serial.println("ERROR unknown message type " + type);
+    }
+
+    // read any extra stuff that may be in the buffer
+    // including the endline if the individual messages didn't read it already
+    readUntilEndline();  
   }
 
   // tell sensors to listen for changes and outputs to update their values
-  
-  // head.loop();
-  // cheeks.loop();
+  head.loop();
+  cheeks.loop();
   // leftArm.loop();
   // rightArm.loop();
-
-  // screenLoop();
+  screen.loop();
 
   Serial.flush();  // force serial to write data
   delay(FRAME_DELAY);

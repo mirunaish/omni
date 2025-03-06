@@ -11,10 +11,11 @@ class LED {
   public:
     LED() {}
 
-    LED(int pin) {
+    void setup(int pin) {
       this->pin = pin;
 
       pinMode(pin, OUTPUT);
+      setBrightness(0);
     }
 
     void setBrightness(int value) {

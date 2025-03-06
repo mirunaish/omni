@@ -20,5 +20,5 @@ const int WAVE_ATTEMPTS = 5;  // how many times to attempt to move arm before as
 const int WAVE_ACCURACY = 3;  // how close to the reported value to try to move the servo
 
 // screen
-const int MAX_PIXELS = 100;
-const int SCREEN_SCALE = 5;  // reduce resolution so images work faster...
+const int MAX_PIXELS = 24*24;  // at most 24x24 chunks
+const int SCREEN_SCALE = 5;  // reduce resolution so images work faster... currently unused
