@@ -144,6 +144,15 @@ export class ClientHandler {
       this.pairId = pair.id;
       pair.pairId = this.id;
     }
+
+    // tell user it was successful
+    this.sendMessage({
+      type: MessageTypes.LOGIN_SUCCESS,
+      payload: {
+        discordId: this.discordId,
+        pairId: this.pairId,
+      },
+    });
   }
 
   /** given another client's userId, pair with them */

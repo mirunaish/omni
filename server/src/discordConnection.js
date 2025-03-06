@@ -106,6 +106,10 @@ export class DiscordHandler {
   async pair({ requesterId, requestedId }, requestId) {
     // find clients that are being connected
     const requester = this.getClient(requesterId);
+    if (!requester) {
+      throw new UserError("you are not currently logged in");
+      return;
+    }
 
     const requestedUserId = await this.getUserId(requestedId);
     if (!requestedUserId)

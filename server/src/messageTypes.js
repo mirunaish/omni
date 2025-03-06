@@ -5,6 +5,7 @@ export const MessageTypes = {
 
   // server to client
   SIGNUP_SUCCESS: "SIGNUP_SUCCESS",
+  LOGIN_SUCCESS: "LOGIN_SUCCESS",
   ERROR: "ERROR",
 
   // discord bot to server

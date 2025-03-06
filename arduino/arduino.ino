@@ -13,8 +13,6 @@ Arm leftArm;
 Arm rightArm;
 // TODO add speaker
 
-int frames = 0; // for testing, will be removed
-
 void setup() {
   // start serial for communicating with the client
   Serial.begin(1000000);  // 1 million!!! bits per second
@@ -33,8 +31,6 @@ void setup() {
   // calibrate arms
   // leftArm.calibrate();
   // rightArm.calibrate();
-
-  frames = 0;
 }
 
 int colors[MAX_PIXELS];  // here so i don't have to constantly reallocate
@@ -98,8 +94,8 @@ void loop() {
   // tell sensors to listen for changes and outputs to update their values
   head.loop();
   cheeks.loop();
-  leftArm.loop();
-  rightArm.loop();
+  // leftArm.loop();
+  // rightArm.loop();
   screen.loop();
 
   Serial.flush();  // force serial to write data
