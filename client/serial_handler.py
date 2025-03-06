@@ -3,7 +3,7 @@ import serial_asyncio
 import struct
 
 from config import SERIAL_PORT, SERIAL_BAUD_RATE
-from utils import get_pixel_chunks, terminate, split_message
+from utils import get_pixels, get_pixel_chunks, terminate, split_message
 
 class SerialHandler(asyncio.Protocol):
     def __init__(self):
@@ -100,8 +100,11 @@ class SerialHandler(asyncio.Protocol):
     async def send_expression(self, name):
         # first send an image reset
         await self.send_image_reset()
-        # send the expression message
-        await self.send_message("EXPRESSION", name)
+
+        # get the expression
+        pixels = get_pixels(f"faces/{name.lower()}.png")
+        # all the pixels should fit into one message
+        await self.send_message_bytes("EXPRESSION", pixels)
 
     def connection_lost(self, error):
         print("disconnected from serial: ", error)

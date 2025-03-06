@@ -37,8 +37,7 @@ class Screen {
       cursorY+=10;
     }
 
-    void makeExpression(String expressionName) {
-      int* colors = chooseExpression(expressionName);
+    void makeExpression(uint16_t colors[EXPRESSION_SIZE]) {
       for (int y = 0; y < EXPRESSION_RESOLUTION; y++) {
         for (int x = 0; x < EXPRESSION_RESOLUTION; x++) {
           setPixel(x, y, colors[x + y * EXPRESSION_RESOLUTION]);

@@ -46,10 +46,24 @@ def get_image(image_url):
 
     image = Image.open(BytesIO(response.content))
     image.thumbnail((SCREEN_SIZE, SCREEN_SIZE))
-    
+
     return image
 
 
+# for local images (expressions)
+def get_pixels(image_path):
+    pixels = []
+
+    with Image.open(image_path) as image:
+        for y in range(image.height):
+            for x in range(image.width):
+                pixel = image.getpixel((x, y))
+                pixels.append(color565(pixel[0], pixel[1], pixel[2]))
+
+    return pixels
+
+
+# for online images
 def get_pixel_chunks(image_url):
     chunks = []
     try:

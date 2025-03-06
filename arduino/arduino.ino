@@ -70,9 +70,13 @@ void loop() {
     }
 
     else if (type == "EXPRESSION") {
-      // message format is: expressionName
-      String expressionName = Serial.readStringUntil('\n');
-      screen.makeExpression(expressionName);
+      // message format is: [colors as 16 bit ints]
+      // there should be EXPRESSION_SIZE (EXPRESSION_RESOLUTION*EXPRESSION_RESOLUTION) uint_16 bytes being sent. read them
+      readIntsFromSerial(colors, EXPRESSION_SIZE);
+      screen.makeExpression(colors);
+
+      readUntilEndline();
+      // only one message so it's fine to delay
     }
 
     else if (type == "PIXELS") {
@@ -84,8 +88,9 @@ void loop() {
       readIntsFromSerial(colors, values[2]*values[2]);
       screen.setPixels(values[0], values[1], values[2], colors);
 
-      // don't do anything else (esp delay). just loop again to read the next message
       readUntilEndline();
+
+      // don't do anything else (esp delay). just loop again to read the next message
       return;
     }
 
