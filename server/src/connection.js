@@ -77,6 +77,12 @@ export class ClientHandler {
     }
 
     switch (message.type) {
+      case MessageTypes.HEADPAT:
+        sendToPairedUser(message);
+        break;
+      case MessageTypes.WAVE:
+        sendToPairedUser(message);
+        break;
       default:
         console.error(`unknown message type ${message.type}`);
     }
@@ -86,6 +92,16 @@ export class ClientHandler {
     if (!this.pairId) return null;
 
     return clients[this.pairId];
+  }
+
+  sendToPairedUser(message) {
+    const otherUser = this.pairedUser();
+    if (!otherUser) {
+      this.reportError("you must be paired to do that");
+      return;
+    }
+
+    otherUser.sendMessage(message);
   }
 
   /** assign this client a new user id */
