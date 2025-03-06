@@ -105,11 +105,7 @@ export class DiscordHandler {
 
   async pair({ requesterId, requestedId }, requestId) {
     // find clients that are being connected
-    const requester = this.getClient(requesterId);
-    if (!requester) {
-      throw new UserError("you are not currently logged in");
-      return;
-    }
+    const requester = await this.getClient(requesterId);
 
     const requestedUserId = await this.getUserId(requestedId);
     if (!requestedUserId)
@@ -123,7 +119,7 @@ export class DiscordHandler {
       throw new UserError("the other user is already paired");
 
     console.log(requester);
-    console.lot(requester?.userId, requester?.discordId);
+    console.log(requester?.userId, requester?.discordId);
 
     const oldPairId = await requester.pair(requested);
 
