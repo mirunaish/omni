@@ -38,15 +38,11 @@ bot.once("ready", () => {
 
 bot.on("messageCreate", (message) => {
   if (message.author.bot) return; // don't handle messages from bots
-  if (
-    !(
-      message.content.startsWith(`<@${bot.user.id}>`) ||
-      message.content.startsWith(`<@!${bot.user.id}>`)
-    )
-  )
-    return; // don't handle messages not talking to me
-
-  Discord.handleDiscordMessage(message);
+  const isCommand =
+    message.content.startsWith(`<@${bot.user.id}>`) ||
+    message.content.startsWith(`<@!${bot.user.id}>`);
+  if (isCommand) Discord.handleDiscordCommand(message);
+  else Discord.handleDiscordMessage(message);
 });
 
 // handle messages from server (mostly feedback for commands)

@@ -17,7 +17,9 @@ export const MessageTypes = {
   SUCCESS: "SUCCESS",
   ERROR: "ERROR", // yea this appears in server to client too
 
-  // forward
+  // forward to arduino
   HEADPAT: "HEADPAT",
   WAVE: "WAVE",
+  EXPRESSION: "EXPRESSION", // from discord bot
+  IMAGE: "IMAGE", // from discord bot
 };

@@ -1,12 +1,17 @@
 from sys import exit
+import requests
+from requests.exceptions import HTTPError
+from io import BytesIO
 
 from PIL import Image
 
-from config import SCREEN_SIZE, CHUNK_SIZE, SCREEN_SCALE
+from config import SCREEN_SIZE, CHUNK_SIZE
+
 
 def terminate():
     print("terminating client")
     exit()
+
 
 def split_message(message):
     words = message.split(' ', 1)  # split off first word from others
@@ -18,6 +23,8 @@ def split_message(message):
         # no space. only one word
         return message, None
 
+
+# chatgpt wrote this vvv
 def color565(r, g, b):
     # Ensure the values are within the valid range (0-255)
     r = max(0, min(255, r))
@@ -32,31 +39,34 @@ def color565(r, g, b):
     # Combine them into one 16-bit value
     return (r_5bit << 11) | (g_6bit << 5) | b_5bit
 
-def get_pixels(image_url):
-    pixels = []
-    size = int(SCREEN_SIZE / SCREEN_SCALE)
-    with Image.open(image_url) as image:
-        image.thumbnail((size, size))
 
-        for y in range(size):
-            for x in range(size):
-                pixel = image.getpixel((x, y))
-                pixels.extend([x, y, color565(pixel[0], pixel[1], pixel[2])])
-    return pixels
+def get_image(image_url):
+    response = requests.get(image_url)
+    response.raise_for_status()  # if response is not 200, raise error
+
+    image = Image.open(BytesIO(response.content))
+    image.thumbnail((SCREEN_SIZE, SCREEN_SIZE))
+    
+    return image
+
 
 def get_pixel_chunks(image_url):
     chunks = []
-    with Image.open(image_url) as image:
-        image.thumbnail((SCREEN_SIZE, SCREEN_SIZE))
+    try:
+        image = get_image(image_url)
+    except HTTPError as e:
+        print("could not open image:", e)
+        return None
 
-        # split the image into squares of CHUNK_SIZE*CHUNK_SIZE pixels
-        for y in range(0, SCREEN_SIZE, CHUNK_SIZE):
-            for x in range(0, SCREEN_SIZE, CHUNK_SIZE):
-                chunk = { "x": x, "y": y, "size": CHUNK_SIZE, "pixels": [] }
-                for j in range(CHUNK_SIZE):
-                    for i in range(CHUNK_SIZE):
-                        pixel = image.getpixel((x+i, y+j))
-                        chunk["pixels"].append(color565(pixel[0], pixel[1], pixel[2]))
-                chunks.append(chunk)
+    # split the image into squares of CHUNK_SIZE*CHUNK_SIZE pixels
+    for y in range(0, SCREEN_SIZE, CHUNK_SIZE):
+        for x in range(0, SCREEN_SIZE, CHUNK_SIZE):
+            chunk = { "x": x, "y": y, "size": CHUNK_SIZE, "pixels": [] }
+            for j in range(CHUNK_SIZE):
+                for i in range(CHUNK_SIZE):
+                    pixel = image.getpixel((x+i, y+j))
+                    chunk["pixels"].append(color565(pixel[0], pixel[1], pixel[2]))
+            chunks.append(chunk)
+    image.close()
     return chunks
     

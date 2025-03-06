@@ -1,10 +1,16 @@
 import { sendToServer } from "../bot.js";
+import { emojiMapping } from "./emojiMapping.js";
 
 export const Discord = {
   requests: {},
   id: "",
 
-  handleDiscordMessage: (message) => {
+  // reformat to [[emoji, command], ...]
+  supportedEmojis: Object.entries(emojiMapping).flatMap(([key, values]) =>
+    values.map((value) => [value, key])
+  ),
+
+  handleDiscordCommand: (message) => {
     // split message up into parts
     let words = message.content.split(" ").slice(1); // remove bot mention
     const command = words[0];
@@ -17,6 +23,42 @@ export const Discord = {
     else if (command === "unpair") Discord.unpair(message, words);
     // none of those matched, reply with a confused message
     else message.reply("huh?");
+  },
+
+  handleDiscordMessage: (message) => {
+    Discord.checkForEmojis(message);
+    Discord.checkForImages(message);
+  },
+
+  checkForEmojis: (message) => {
+    // check if message includes one of the supported emojis
+    for (const [emoji, expressionName] of Discord.supportedEmojis) {
+      if (message.content.includes(emoji)) {
+        // send the command to the server
+        console.log("sending expression", expressionName);
+        sendToServer({
+          type: "EXPRESSION",
+          payload: { discordId: message.author.id, expressionName },
+        });
+
+        break; // stop after 1 emoji
+      }
+    }
+  },
+
+  checkForImages: (message) => {
+    if (message.attachments.size == 0) return;
+
+    for (const attachment of message.attachments.values()) {
+      if (attachment.contentType.startsWith("image/")) {
+        console.log("sending image to server", attachment.name);
+        sendToServer({
+          type: "IMAGE",
+          payload: { discordId: message.author.id, url: attachment.url },
+        });
+      }
+      return;
+    }
   },
 
   connect: (message, words) => {

@@ -51,6 +51,7 @@ void loop() {
 
     if (type == "HEADPAT") {
       cheeks.blush();
+      readUntilEndline();
     }
 
     else if (type == "WAVE") {
@@ -65,6 +66,13 @@ void loop() {
 
     else if (type == "RESET_SCREEN") {
       screen.reset();
+      readUntilEndline();
+    }
+
+    else if (type == "EXPRESSION") {
+      // message format is: expressionName
+      String expressionName = Serial.readStringUntil('\n');
+      screen.makeExpression(expressionName);
     }
 
     else if (type == "PIXELS") {
@@ -82,12 +90,8 @@ void loop() {
     }
 
     else {
-      Serial.println("ERROR unknown message type " + type);
+      Serial.println("ERROR unknown message type");
     }
-
-    // read any extra stuff that may be in the buffer
-    // including the endline if the individual messages didn't read it already
-    readUntilEndline();  
   }
 
   // tell sensors to listen for changes and outputs to update their values
