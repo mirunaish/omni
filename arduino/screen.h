@@ -21,7 +21,7 @@ class Screen {
 
     void setup() {
       tft.begin();
-      tft.setRotation(2);  // TODO change back to 0?
+      tft.setRotation(0);
       reset();  // initialize to black
     }
 
@@ -37,8 +37,7 @@ class Screen {
       cursorY+=10;
     }
 
-    void makeExpression(String expressionName) {
-      int* colors = chooseExpression(expressionName);
+    void makeExpression(uint16_t colors[EXPRESSION_SIZE]) {
       for (int y = 0; y < EXPRESSION_RESOLUTION; y++) {
         for (int x = 0; x < EXPRESSION_RESOLUTION; x++) {
           setPixel(x, y, colors[x + y * EXPRESSION_RESOLUTION]);

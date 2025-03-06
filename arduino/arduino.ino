@@ -40,10 +40,6 @@ void setup() {
 int colors[MAX_PIXELS];  // here so i don't have to constantly reallocate
 
 void loop() {
-  // TODO remove this vvv
-  if (frames == 10) Serial.println("SEND_ME_THE_IMAGE");
-  frames++;
-
   // listen for messages from serial
   if (Serial.available()) {
     String type = Serial.readStringUntil(';');  // read message type
@@ -70,9 +66,13 @@ void loop() {
     }
 
     else if (type == "EXPRESSION") {
-      // message format is: expressionName
-      String expressionName = Serial.readStringUntil('\n');
-      screen.makeExpression(expressionName);
+      // message format is: [colors as 16 bit ints]
+      // there should be EXPRESSION_SIZE (EXPRESSION_RESOLUTION*EXPRESSION_RESOLUTION) uint_16 bytes being sent. read them
+      readIntsFromSerial(colors, EXPRESSION_SIZE);
+      screen.makeExpression(colors);
+
+      readUntilEndline();
+      // only one message so it's fine to delay
     }
 
     else if (type == "PIXELS") {
@@ -84,8 +84,9 @@ void loop() {
       readIntsFromSerial(colors, values[2]*values[2]);
       screen.setPixels(values[0], values[1], values[2], colors);
 
-      // don't do anything else (esp delay). just loop again to read the next message
       readUntilEndline();
+
+      // don't do anything else (esp delay). just loop again to read the next message
       return;
     }
 
@@ -97,8 +98,8 @@ void loop() {
   // tell sensors to listen for changes and outputs to update their values
   head.loop();
   cheeks.loop();
-  // leftArm.loop();
-  // rightArm.loop();
+  leftArm.loop();
+  rightArm.loop();
   screen.loop();
 
   Serial.flush();  // force serial to write data

@@ -14,13 +14,13 @@ def terminate():
 
 
 def split_message(message):
-    words = message.split(' ', 1)  # split off first word from others
+    words = message.split(' ')
     
     if len(words) > 1:
-        first_word, remaining_message = words
-        return first_word, remaining_message
+        # return array of words
+        return words[0], words[1:]
     else:
-        # no space. only one word
+        # only one word
         return message, None
 
 
@@ -46,10 +46,31 @@ def get_image(image_url):
 
     image = Image.open(BytesIO(response.content))
     image.thumbnail((SCREEN_SIZE, SCREEN_SIZE))
-    
+
+    if image.width != image.height:
+        # make the image square
+        square_image = Image.new("RGB", (SCREEN_SIZE, SCREEN_SIZE), (0, 0, 0))
+        square_image.paste(image, ((SCREEN_SIZE-image.width)//2, (SCREEN_SIZE-image.height)//2))
+        image.close()
+        return square_image
+
     return image
 
 
+# for local images (expressions)
+def get_pixels(image_path):
+    pixels = []
+
+    with Image.open(image_path) as image:
+        for y in range(image.height):
+            for x in range(image.width):
+                pixel = image.getpixel((x, y))
+                pixels.append(color565(pixel[0], pixel[1], pixel[2]))
+
+    return pixels
+
+
+# for online images
 def get_pixel_chunks(image_url):
     chunks = []
     try:
