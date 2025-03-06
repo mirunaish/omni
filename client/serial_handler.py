@@ -2,7 +2,7 @@ import asyncio
 import serial_asyncio
 import struct
 
-from config import SERIAL_PORT, SERIAL_BAUD_RATE
+from config import SERIAL_PORT, SERIAL_BAUD_RATE, CHUNK_SIZE, SCREEN_SIZE
 from utils import get_pixels, get_pixel_chunks, terminate, split_message
 
 class SerialHandler(asyncio.Protocol):
@@ -12,6 +12,7 @@ class SerialHandler(asyncio.Protocol):
         self.buffer = ""
         self.buffer_lock = asyncio.Lock()
         self.serial_lock = asyncio.Lock()
+        self.last_image_chunks = None
     
     async def connect(self, queue, loop):
         self.queue = queue
@@ -34,7 +35,7 @@ class SerialHandler(asyncio.Protocol):
             try:
                 messages = data.decode()  # decode binary data into messages
             except UnicodeDecodeError:
-                print("couldn't decode data from serial")
+                print("couldn't decode data from serial:", data)
                 terminate()
             # data is not guaranteed to be a full message
             # so we buffer it and split it into messages
@@ -66,9 +67,12 @@ class SerialHandler(asyncio.Protocol):
             self.transport.write(data)
 
     async def send_message_bytes(self, type, payload):
+        # print("sending pixels image", payload[0], payload[1], payload[2], len(payload)-3)
         type_encoded = type.encode()
         payload_encoded = b''.join([struct.pack('H', i) for i in payload])
         message = type_encoded + (';'.encode()) + payload_encoded + ('\n'.encode())
+
+        # print("sending bytes message to serial:", repr(message))
 
         self.transport.write(message)
 
@@ -81,6 +85,9 @@ class SerialHandler(asyncio.Protocol):
         chunks = get_pixel_chunks(image_url)
         if (chunks is None):
             return
+        
+        # save chunks so i can resend them later
+        self.last_image_chunks = chunks
 
         # first send an image reset
         await self.send_image_reset()
@@ -93,6 +100,32 @@ class SerialHandler(asyncio.Protocol):
                 await self.send_message_bytes("PIXELS", payload)
                 # wait for a bit to not overflow the buffer
                 # await asyncio.sleep(0.01)
+                return  # TODO remvoe
+    
+    async def resend_chunks(self, x, y):
+        if (self.last_image_chunks is None):
+            return
+
+        # determine which chunk i am being asked for
+        index = (y // CHUNK_SIZE) * (SCREEN_SIZE // CHUNK_SIZE) + (x // CHUNK_SIZE)
+
+        # the first chunk to be sent always has issues for some reason
+        # if (index == 0): return
+
+        print("RESENDING CHUNKS", x, y, index, len(self.last_image_chunks))
+
+        async with self.serial_lock:
+            # sleep first so i can see what's happening
+            await asyncio.sleep(5)
+            # send the asked for chunk and the next one
+            for j in range(2 if index < len(self.last_image_chunks) - 1 else 1):
+                print("resending chunk", j)
+                chunk = self.last_image_chunks[index + j]
+                payload = [chunk["x"], chunk["y"], chunk["size"]]
+                payload.extend(chunk["pixels"])
+                await self.send_message_bytes("PIXELS", payload)
+                # wait for a bit to not overflow the buffer
+                await asyncio.sleep(0.02)
 
     async def send_expression(self, name):
         # first send an image reset
@@ -117,6 +150,10 @@ class SerialHandler(asyncio.Protocol):
         elif type == "WAVE":
             # forward to websocket
             await socket.send_message(type, {"name": payload[0], "value": int(payload[1])})
+        
+        elif type == "RESEND_CHUNKS":
+            # tell serial to resend image chunks
+            await self.resend_chunks(int(payload[0]), int(payload[1]))
         
         elif type == "LOG":
             print("arduino logged:", repr(" ".join(payload)))

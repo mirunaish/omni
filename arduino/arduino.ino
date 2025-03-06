@@ -38,6 +38,7 @@ void setup() {
 }
 
 int colors[MAX_PIXELS];  // here so i don't have to constantly reallocate
+bool resend = false;
 
 void loop() {
   // listen for messages from serial
@@ -76,15 +77,28 @@ void loop() {
     }
 
     else if (type == "PIXELS") {
+      Serial.println("LOG arduino received PIXELS message");
       // message format is: x y size [colors as 16 bit ints]
       // read x y and size
       int values[3];
       readIntsFromSerial(values, 3);
+      Serial.println("LOG arduino read stuff: " + String(values[0]) + " " + String(values[1]) + " " + String(values[2]));
       // there should be size*size uint_16 bytes being sent. read them
       readIntsFromSerial(colors, values[2]*values[2]);
-      screen.setPixels(values[0], values[1], values[2], colors);
 
-      readUntilEndline();
+      Serial.print("LOG arduino got [");
+      for (int i=0; i<values[2]*values[2]; i++) Serial.print(String(colors[i]) + " ");
+      Serial.println("]");
+
+      screen.setPixels(values[0]+100, values[1]+100, values[2], colors);
+
+      int charsRead = readUntilEndline();
+      if (charsRead > 0 || !resend) {
+        // something went wrong with this message. there were too many values
+        // error was likely because of buffer overflow. ask client to resend this chunk and the next one
+        Serial.println("RESEND_CHUNKS " + String(values[0]) + " " + String(values[1]));
+        resend = true;
+      }
 
       // don't do anything else (esp delay). just loop again to read the next message
       return;
@@ -92,14 +106,15 @@ void loop() {
 
     else {
       Serial.println("ERROR unknown message type");
+      int charsRead = readUntilEndline();
     }
   }
 
   // tell sensors to listen for changes and outputs to update their values
-  head.loop();
+  // head.loop();
   cheeks.loop();
-  leftArm.loop();
-  rightArm.loop();
+  // leftArm.loop();
+  // rightArm.loop();
   screen.loop();
 
   Serial.flush();  // force serial to write data

@@ -84,17 +84,22 @@ int readIntsFromSerial(int *buffer, size_t count) {
  * if arduino doesn't need it, use this function to remove it from serial buffer
  * this also has the benefit of recovering from errors caused by buffer overflow
  */
-void readUntilEndline() {
+int readUntilEndline() {
   char byte = 0;
   int charsRead = 0;
+  String allBytes = "";
 
   while (byte != '\n') {
     if (Serial.available()) {
       byte = Serial.read();
       charsRead++;
+      allBytes += String(byte);
     }
   }
 
   if (charsRead == 0) Serial.println("ERROR readUntilEndline failed to read endline");
   if (charsRead > 1) Serial.println("ERROR readUntilEndline read " + String(charsRead - 1) + " non-endline characters");
+  Serial.println("LOG readuntilendline read " + allBytes);
+
+  return charsRead - 1;
 }
