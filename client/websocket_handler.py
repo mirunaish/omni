@@ -56,7 +56,8 @@ class WebsocketHandler():
     
     async def process_message(self, message_string, serial):
         message = json.loads(message_string)
-        type, payload = message["type"], message["payload"]
+        type = message.get("type")
+        payload = message.get("payload")
 
         if type == "HEARTBEAT":
             # respond with a heartbeat
