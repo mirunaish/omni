@@ -23,8 +23,8 @@ void setup() {
   head.setup(A4);
   cheeks.setup(4);
 
-  leftArm.setup(A0, 2, 14, "LEFT", 0);
-  rightArm.setup(A2, 3, 16, "RIGHT", 180);
+  leftArm.setup(A0, 2, 14, "LEFT", false);
+  rightArm.setup(A2, 3, 16, "RIGHT", true);
 
   screen.setup();
 
@@ -96,8 +96,8 @@ void loop() {
   // tell sensors to listen for changes and outputs to update their values
   head.loop();
   cheeks.loop();
-  leftArm.loop();
-  rightArm.loop();
+  // leftArm.loop();
+  // rightArm.loop();
   screen.loop();
 
   Serial.flush();  // force serial to write data

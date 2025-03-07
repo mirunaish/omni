@@ -12,26 +12,29 @@ class Arm {
 
     Servo servo;
 
-    int neutralAngle;
+    
+    // if they are not inverted, max pot is min servo, and servo 0 is down
+    // if they are inverted, min pot is min servo, and servo 0 is up, 180 is down
+    bool inverted;
 
     int currentAngle;  // detected by pot...
     int movingTo = -1;  // where pair told me to move...
     int attempts = 0;
     int cooldown = 0;
 
-    int minAngleValue = 1024;  // set during pot calibration
-    int maxAngleValue = 0;
+    int upValue = 1024;  // set during pot calibration
+    int downValue = 0;
 
   public:
     Arm() {}
 
-    void setup(int potPin, int servoPin, int powerPin, String name, int neutralAngle) {
+    void setup(int potPin, int servoPin, int powerPin, String name, bool inverted) {
       this->potPin = potPin;
       this->servoPin = servoPin;
       this->powerPin = powerPin;
       this->name = name;
 
-      this->neutralAngle = neutralAngle;
+      this->inverted = inverted;
 
       // set power pin as output
       pinMode(powerPin, OUTPUT);
@@ -39,8 +42,8 @@ class Arm {
       // attach servo to pin
       this->servo.attach(servoPin);
       // move to neutral
-      this->servo.write(neutralAngle);
-      this->currentAngle = neutralAngle;
+      this->currentAngle = inverted ? 180 : 0;
+      this->servo.write(this->currentAngle);
 
       this->cooldown = 0;
     }
@@ -55,28 +58,39 @@ class Arm {
       // turn on servos
       toggleServo(true);
 
-      // find min value
-      servo.write(180-neutralAngle);
-      delay(1500);  // wait for servo to move...
-      this->maxAngleValue = analogRead(potPin);
-
-      // find max value
-      servo.write(neutralAngle);
+      // find up value
+      servo.write(inverted ? 0 : 180);
       delay(1500);  // wait for servo to move....
-      this->minAngleValue = analogRead(potPin);
+      this->upValue = analogRead(potPin);
+
+      // find down value
+      servo.write(inverted ? 180 : 0);
+      delay(1500);  // wait for servo to move...
+      this->downValue = analogRead(potPin);
+
+      // move to neutral...
+      servo.write(inverted ? 180 : 0);
+      delay(1000);  // wait for it to move
 
       // turn off servos
       toggleServo(false);
 
-      Serial.println("LOG arm " + this->name + " calibrated. set min " + String(minAngleValue) + " and max " + String(maxAngleValue));
+      Serial.println("LOG arm " + this->name + " calibrated. set down " + String(downValue) + " and up " + String(upValue));
     }
 
     /** get the angle of the arms as reported by the pot */
     int getPotAngle() {
-      // minAngleValue - maxAngleValue pot range maps to the servo's 0-180 degrees.
-      // except they are inverted so max pot is min servo....
+      // upValue - downValue pot range maps to the servo's 0-180 degrees.
       double rawValue = analogRead(potPin);  // double to avoid numerical precision issues
-      return floor(180.0 - (180.0 * (rawValue - minAngleValue)) / (maxAngleValue - minAngleValue));
+
+      // if they are not inverted, max pot is min servo, and servo 0 is down
+      // if they are inverted, min pot is min servo, and servo 0 is up, 180 is down
+      
+      // percentage between down and up...
+      double percentage = (rawValue - downValue) * 1.0 / (upValue - downValue);
+      
+      int value = floor(180.0 * percentage);
+      return inverted ? 180 - value : value;
     }
 
     /** received signal from server that i should move here */
@@ -93,6 +107,7 @@ class Arm {
 
     void loop() {
       int angleOfPot = getPotAngle();
+      Serial.println("LOG " + String(angleOfPot));
       cooldown--;
 
       // if i am supposed to move somewhere, attempt to move there until pot reports i have reached my destination
