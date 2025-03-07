@@ -39,6 +39,7 @@ class Arm {
       this->servo.attach(servoPin);
       // move to neutral
       this->servo.write(neutralAngle);
+      this->currentAngle = neutralAngle;
     }
 
     /** toggleServo(true) turns it on, false turns it off */
@@ -92,6 +93,8 @@ class Arm {
 
       // if i am supposed to move somewhere, attempt to move there until pot reports i have reached my destination
       if (movingTo != -1) {
+        toggleServo(true);
+        Serial.println("servo is movinnn " + String(movingTo));
         servo.write(movingTo);
         currentAngle = angleOfPot;
         attempts++;

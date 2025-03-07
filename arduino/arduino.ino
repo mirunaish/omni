@@ -47,11 +47,11 @@ void loop() {
     }
 
     else if (type == "WAVE") {
+      Serial.println("LOG moving arm " + name);
+      
       // message format: name value
       String name = Serial.readStringUntil(' ');
       int value = Serial.readStringUntil('\n').toInt();
-
-      Serial.println("LOG moving arm " + name);
 
       if (name == "LEFT") leftArm.moveTo(value);
       else if (name == "RIGHT") rightArm.moveTo(value);

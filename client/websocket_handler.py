@@ -47,7 +47,7 @@ class WebsocketHandler():
     async def send_message(self, type, payload):
         message = json.dumps({"type": type, "payload": payload})
         if type != "HEARTBEAT":
-            print("sending message to server ", message)
+            print("sending message to server:", message)
 
         try:
             await self.socket.send(message)
@@ -64,7 +64,7 @@ class WebsocketHandler():
             await self.send_message("HEARTBEAT", None)
             return
 
-        print("received message from server: ", message_string)
+        print("received message from server:", message_string)
 
         if type == "SIGNUP_SUCCESS":
             save_id(payload)
