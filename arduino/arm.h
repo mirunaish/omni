@@ -12,6 +12,8 @@ class Arm {
 
     Servo servo;
 
+    int neutralAngle;
+
     int currentAngle;  // detected by pot...
     int movingTo = -1;  // where pair told me to move...
     int attempts = 0;
@@ -27,6 +29,8 @@ class Arm {
       this->servoPin = servoPin;
       this->powerPin = powerPin;
       this->name = name;
+
+      this->neutralAngle = neutralAngle;
 
       // set power pin as output
       pinMode(powerPin, OUTPUT);
@@ -48,14 +52,14 @@ class Arm {
       toggleServo(true);
 
       // find min value
-      servo.write(0);
+      servo.write(180-neutralAngle);
       delay(1500);  // wait for servo to move...
-      this->minAngleValue = analogRead(potPin);
+      this->maxAngleValue = analogRead(potPin);
 
       // find max value
-      servo.write(180);
+      servo.write(neutralAngle);
       delay(1500);  // wait for servo to move....
-      this->maxAngleValue = analogRead(potPin);
+      this->minAngleValue = analogRead(potPin);
 
       // turn off servos
       toggleServo(false);

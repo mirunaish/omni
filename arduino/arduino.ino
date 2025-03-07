@@ -23,8 +23,8 @@ void setup() {
   head.setup(A4);
   cheeks.setup(4);
 
-  leftArm.setup(A0, 2, 14, "LEFT", 180);
-  rightArm.setup(A2, 3, 16, "RIGHT", 0);
+  leftArm.setup(A0, 2, 14, "LEFT", 0);
+  rightArm.setup(A2, 3, 16, "RIGHT", 180);
 
   screen.setup();
 
@@ -50,6 +50,8 @@ void loop() {
       // message format: name value
       String name = Serial.readStringUntil(' ');
       int value = Serial.readStringUntil('\n').toInt();
+
+      Serial.println("LOG moving arm " + name);
 
       if (name == "LEFT") leftArm.moveTo(value);
       else if (name == "RIGHT") rightArm.moveTo(value);
@@ -94,8 +96,8 @@ void loop() {
   // tell sensors to listen for changes and outputs to update their values
   head.loop();
   cheeks.loop();
-  // leftArm.loop();
-  // rightArm.loop();
+  leftArm.loop();
+  rightArm.loop();
   screen.loop();
 
   Serial.flush();  // force serial to write data

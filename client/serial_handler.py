@@ -57,6 +57,8 @@ class SerialHandler(asyncio.Protocol):
             if payload is not None:
                 if isinstance(payload, list):
                     payload = " ".join([str(item) for item in payload])
+                if isinstance(payload, dict):
+                    payload = " ".join([str(item) for item in payload.values()])
                 message += payload
             message += "\n"  # add newline
 
