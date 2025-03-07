@@ -7,6 +7,7 @@ class Arm {
   private:
     int potPin;
     int servoPin;
+    int powerPin;
     String name;
 
     Servo servo;
@@ -21,28 +22,43 @@ class Arm {
   public:
     Arm() {}
 
-    void setup(int potPin, int servoPin, String name) {
+    void setup(int potPin, int servoPin, int powerPin, String name, int neutralAngle) {
       this->potPin = potPin;
       this->servoPin = servoPin;
+      this->powerPin = powerPin;
       this->name = name;
+
+      // set power pin as output
+      pinMode(powerPin, OUTPUT);
 
       // attach servo to pin
       this->servo.attach(servoPin);
       // move to neutral
-      this->servo.write(NEUTRAL_ANGLE);
+      this->servo.write(neutralAngle);
+    }
+
+    /** toggleServo(true) turns it on, false turns it off */
+    void toggleServo(bool value) {
+      digitalWrite(powerPin, value ? HIGH : LOW);
     }
 
     /** when first starting, find mapping of servo to pot, to accurately map back later */
     void calibrate() {
+      // turn on servos
+      toggleServo(true);
+
       // find min value
       servo.write(0);
-      delay(1000);  // wait for servo to move...
+      delay(1500);  // wait for servo to move...
       this->minAngleValue = analogRead(potPin);
 
       // find max value
       servo.write(180);
-      delay(1000);  // wait for servo to move....
+      delay(1500);  // wait for servo to move....
       this->maxAngleValue = analogRead(potPin);
+
+      // turn off servos
+      toggleServo(false);
 
       Serial.println("LOG arm " + this->name + " calibrated. set min " + String(minAngleValue) + " and max " + String(maxAngleValue));
     }
@@ -57,6 +73,8 @@ class Arm {
 
     /** received signal from server that i should move here */
     void moveTo(int value) {
+      // turn on servo
+      toggleServo(true);
       movingTo = value;
       attempts = 0;
     }
@@ -82,6 +100,7 @@ class Arm {
         else if (attempts > WAVE_ATTEMPTS) {
           movingTo = -1;  // no longer moving
           sendPosition();  // but tell pair about my new position
+          toggleServo(false);  // and turn off servos
         }
 
         return;

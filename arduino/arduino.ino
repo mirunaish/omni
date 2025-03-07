@@ -23,14 +23,14 @@ void setup() {
   head.setup(A4);
   cheeks.setup(4);
 
-  leftArm.setup(A0, 2, "LEFT");
-  rightArm.setup(A2, 3, "RIGHT");
+  leftArm.setup(A0, 2, 14, "LEFT", 180);
+  rightArm.setup(A2, 3, 16, "RIGHT", 0);
 
   screen.setup();
 
   // calibrate arms
-  // leftArm.calibrate();
-  // rightArm.calibrate();
+  leftArm.calibrate();
+  rightArm.calibrate();
 }
 
 int colors[MAX_PIXELS];  // here so i don't have to constantly reallocate
