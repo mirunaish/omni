@@ -118,9 +118,6 @@ export class DiscordHandler {
     if (requested.pairId)
       throw new UserError("the other user is already paired");
 
-    console.log(requester);
-    console.log(requester?.userId, requester?.discordId);
-
     const oldPairId = await requester.pair(requested);
 
     // let old pair know they've been unpaired
