@@ -1,4 +1,7 @@
 export const MessageTypes = {
+  // btwn server and client and server and discord, in both directions
+  HEARTBEAT: "HEARTBEAT",
+
   // client to server
   SIGNUP: "SIGNUP",
   LOGIN: "LOGIN",

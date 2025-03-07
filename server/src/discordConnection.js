@@ -16,6 +16,9 @@ export function addDiscord(ws) {
     try {
       // parse message into object
       const message = JSON.parse(rawMessage.toString());
+
+      if (message.type == MessageTypes.HEARTBEAT) return;
+
       console.log(
         `server received message from discord: ${JSON.stringify(message)}`
       );
@@ -27,9 +30,17 @@ export function addDiscord(ws) {
     }
   });
 
+  // send heartbeat every 30 seconds to keep the connection alive
+  const heartbeatInterval = setInterval(() => {
+    if (ws.readyState === ws.OPEN) {
+      ws.send(`{ "type": "${MessageTypes.HEARTBEAT}" }`);
+    }
+  }, 30000);
+
   ws.on("close", () => {
     console.log("discord disconnected");
     discord.handler = null;
+    clearInterval(heartbeatInterval);
   });
 
   console.log("discord connected");

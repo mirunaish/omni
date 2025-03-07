@@ -23,6 +23,9 @@ export function addClient(ws) {
     try {
       // parse message into object
       const message = JSON.parse(rawMessage.toString());
+
+      if (message.type == MessageTypes.HEARTBEAT) return;
+
       console.log(
         `server received message from client ${id}: ${JSON.stringify(message)}`
       );
@@ -34,9 +37,17 @@ export function addClient(ws) {
     }
   });
 
+  // send heartbeat every 30 seconds to keep the connection alive
+  const heartbeatInterval = setInterval(() => {
+    if (ws.readyState === ws.OPEN) {
+      ws.send(`{ "type": "${MessageTypes.HEARTBEAT}" }`);
+    }
+  }, 30000);
+
   // when socket closes, do any clean up necessary
   ws.on("close", () => {
     console.log(`client ${id} disconnected`);
+    clearInterval(heartbeatInterval);
 
     // disconnect from connected client
     const otherUser = clients[id].pairedUser();
