@@ -38,7 +38,6 @@ class WebsocketHandler():
         try:
             while True:
                 message = await self.socket.recv()
-                print("received message from server: ", message)
                 self.queue.put_nowait(("websocket", message))
         except Exception as e:
             print("disconnected from server:", e)
@@ -47,15 +46,24 @@ class WebsocketHandler():
     # send a message to the server
     async def send_message(self, type, payload):
         message = json.dumps({"type": type, "payload": payload})
-        print("sending message to server ", message)
+        if type != "HEARTBEAT":
+            print("sending message to server ", message)
+
         try:
             await self.socket.send(message)
         except Exception as e:
             print("couldn't send message:", e)
     
-    async def process_message(self, message, serial):
-        message = json.loads(message)
+    async def process_message(self, message_string, serial):
+        message = json.loads(message_string)
         type, payload = message["type"], message["payload"]
+
+        if type == "HEARTBEAT":
+            # respond with a heartbeat
+            await self.send_message("HEARTBEAT", None)
+            return
+
+        print("received message from server: ", message_string)
 
         if type == "SIGNUP_SUCCESS":
             save_id(payload)

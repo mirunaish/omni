@@ -9,7 +9,10 @@ dotenv.config();
 const socket = new WebSocket(process.env.SERVER_URL);
 
 export function sendToServer(message) {
-  if (socket.readyState !== socket.OPEN) return;
+  if (socket.readyState !== socket.OPEN) {
+    console.warn("could not send message, socket is closed");
+    return;
+  }
   socket.send(JSON.stringify(message));
 }
 
@@ -48,6 +51,13 @@ bot.on("messageCreate", (message) => {
 // handle messages from server (mostly feedback for commands)
 socket.on("message", (messageRaw) => {
   const message = JSON.parse(messageRaw);
+
+  if (message.type == "HEARTBEAT") {
+    // respond with heartbeat
+    sendToServer({ type: "HEARTBEAT" });
+    return;
+  }
+
   console.log("bot received message from server:", message);
 
   Discord.handleServerMessage(message);
