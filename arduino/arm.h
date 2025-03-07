@@ -17,6 +17,7 @@ class Arm {
     int currentAngle;  // detected by pot...
     int movingTo = -1;  // where pair told me to move...
     int attempts = 0;
+    int cooldown = 0;
 
     int minAngleValue = 1024;  // set during pot calibration
     int maxAngleValue = 0;
@@ -40,6 +41,8 @@ class Arm {
       // move to neutral
       this->servo.write(neutralAngle);
       this->currentAngle = neutralAngle;
+
+      this->cooldown = 0;
     }
 
     /** toggleServo(true) turns it on, false turns it off */
@@ -90,11 +93,11 @@ class Arm {
 
     void loop() {
       int angleOfPot = getPotAngle();
+      cooldown--;
 
       // if i am supposed to move somewhere, attempt to move there until pot reports i have reached my destination
       if (movingTo != -1) {
-        toggleServo(true);
-        Serial.println("servo is movinnn " + String(movingTo));
+        Serial.println("LOG moving arm");
         servo.write(movingTo);
         currentAngle = angleOfPot;
         attempts++;
@@ -106,10 +109,15 @@ class Arm {
 
         else if (attempts > WAVE_ATTEMPTS) {
           movingTo = -1;  // no longer moving
-          sendPosition();  // but tell pair about my new position
+          // sendPosition();  // but tell pair about my new position
           toggleServo(false);  // and turn off servos
         }
 
+        return;
+      }
+
+      // if cooldown, don't send message...
+      if (cooldown > 0) {
         return;
       }
 
@@ -117,6 +125,7 @@ class Arm {
       if (abs(angleOfPot - currentAngle) >= WAVE_THRESHOLD) {
         currentAngle = angleOfPot;
         sendPosition();
+        this->cooldown = getFrames(WAVE_COOLDOWN);
       }
     }
 };

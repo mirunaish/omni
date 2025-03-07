@@ -47,7 +47,7 @@ void loop() {
     }
 
     else if (type == "WAVE") {
-      Serial.println("LOG moving arm " + name);
+      Serial.println("LOG moving arm");
       
       // message format: name value
       String name = Serial.readStringUntil(' ');

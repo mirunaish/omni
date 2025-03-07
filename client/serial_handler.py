@@ -41,7 +41,7 @@ class SerialHandler(asyncio.Protocol):
             self.buffer += messages
             # print("buffer is", repr(self.buffer))
             for message in self.buffer.split("\r\n")[:-1]:
-                # print("received message from serial:", repr(message))
+                print("received message from serial:", repr(message))
                 self.queue.put_nowait(("serial", message))
             
             # if the last message is complete, clear the buffer
