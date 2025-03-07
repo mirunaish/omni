@@ -116,7 +116,7 @@ export class DiscordHandler {
 
   async pair({ requesterId, requestedId }, requestId) {
     // find clients that are being connected
-    const requester = this.getClient(requesterId);
+    const requester = await this.getClient(requesterId);
 
     const requestedUserId = await this.getUserId(requestedId);
     if (!requestedUserId)
